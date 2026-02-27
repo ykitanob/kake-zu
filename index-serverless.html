@@ -219,7 +219,6 @@ FAM001	I002	0	0	2	1"></textarea>
 
         async function launchDrawioWithOptionalXml(modelXml) {
             const iframe = document.getElementById('drawio-frame');
-            const encodedXml = modelXml ? `&xml=${encodeURIComponent(modelXml)}` : '';
             const tip = document.getElementById('connect-tip');
 
             if (tip) {
@@ -233,7 +232,7 @@ FAM001	I002	0	0	2	1"></textarea>
                 setTimeout(() => iframe.contentWindow.postMessage(payload, '*'), 2600);
             };
 
-            iframe.src = getDrawioUrl(`${encodedXml}&launch=${Date.now()}`);
+            iframe.src = getDrawioUrl(`&launch=${Date.now()}`);
         }
 
         function addPedEntry() {
