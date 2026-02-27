@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>家系図作成ツール (kake-zu)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🌳 家系図作成ツール</h1>
+    <p>kake-zu — Family Tree Creator</p>
+  </div>
+</header>
+
+<div class="app">
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-tabs">
+      <button class="active" data-tab="members">メンバー</button>
+      <button data-tab="relations">関係</button>
+      <button data-tab="io">保存/読込</button>
+    </div>
+
+    <!-- Members tab -->
+    <div class="sidebar-panel" id="tab-members">
+      <div class="section-title">人物を追加</div>
+      <div class="form-group">
+        <label>氏名 <span style="color:red">*</span></label>
+        <input id="inp-name" type="text" placeholder="山田 太郎">
+      </div>
+      <div class="form-group">
+        <label>性別</label>
+        <select id="inp-gender">
+          <option value="other">未設定</option>
+          <option value="male">男性</option>
+          <option value="female">女性</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>生年月日</label>
+        <input id="inp-birth" type="date">
+      </div>
+      <div class="form-group">
+        <label>没年月日</label>
+        <input id="inp-death" type="date">
+      </div>
+      <div class="form-group">
+        <label>メモ</label>
+        <textarea id="inp-note" placeholder="備考など…"></textarea>
+      </div>
+      <button class="btn btn-primary btn-block" id="btn-add-person">追加</button>
+
+      <div class="section-title" style="margin-top:18px;">メンバー一覧</div>
+      <div class="person-list" id="person-list">
+        <div class="empty-state">まだ人物がいません</div>
+      </div>
+    </div>
+
+    <!-- Relations tab -->
+    <div class="sidebar-panel" id="tab-relations" style="display:none">
+      <div class="section-title">親子関係を追加</div>
+      <div class="form-group">
+        <label>親</label>
+        <select id="rel-parent"><option value="">--- 選択 ---</option></select>
+      </div>
+      <div class="form-group">
+        <label>子</label>
+        <select id="rel-child"><option value="">--- 選択 ---</option></select>
+      </div>
+      <button class="btn btn-primary btn-block" id="btn-add-pc">追加</button>
+
+      <div class="section-title">配偶者関係を追加</div>
+      <div class="form-group">
+        <label>人物 1</label>
+        <select id="rel-sp1"><option value="">--- 選択 ---</option></select>
+      </div>
+      <div class="form-group">
+        <label>人物 2</label>
+        <select id="rel-sp2"><option value="">--- 選択 ---</option></select>
+      </div>
+      <button class="btn btn-primary btn-block" id="btn-add-sp">追加</button>
+
+      <div id="rel-error" style="color:red;font-size:0.82rem;margin-top:8px;"></div>
+    </div>
+
+    <!-- Import/Export tab -->
+    <div class="sidebar-panel" id="tab-io" style="display:none">
+      <div class="section-title">書き出し (JSON)</div>
+      <div class="io-area">
+        <textarea id="io-export" readonly placeholder="ここにJSONが出力されます"></textarea>
+      </div>
+      <button class="btn btn-primary btn-block" id="btn-export">書き出す</button>
+
+      <div class="section-title" style="margin-top:16px;">読み込み (JSON)</div>
+      <div class="io-area">
+        <textarea id="io-import" placeholder="JSONをここに貼り付けてください"></textarea>
+      </div>
+      <button class="btn btn-primary btn-block" id="btn-import">読み込む</button>
+      <div id="io-error" style="color:red;font-size:0.82rem;margin-top:6px;"></div>
+    </div>
+  </aside>
+
+  <!-- ===== Canvas ===== -->
+  <div class="canvas-wrap" id="canvas-wrap">
+    <canvas id="tree-canvas"></canvas>
+
+    <div class="canvas-controls">
+      <button id="btn-zoom-in"  title="拡大">＋</button>
+      <button id="btn-zoom-out" title="縮小">－</button>
+      <button id="btn-fit"      title="全体表示">⊞</button>
+    </div>
+
+    <!-- Node detail popup -->
+    <div class="detail-panel" id="detail-panel">
+      <h3 id="dp-name">—</h3>
+      <div class="detail-row"><span>性別:</span><span id="dp-gender">—</span></div>
+      <div class="detail-row"><span>生年月日:</span><span id="dp-birth">—</span></div>
+      <div class="detail-row"><span>没年月日:</span><span id="dp-death">—</span></div>
+      <div class="detail-row" id="dp-parents-row"><span>親:</span><span id="dp-parents">—</span></div>
+      <div class="detail-row" id="dp-children-row"><span>子:</span><span id="dp-children">—</span></div>
+      <div class="detail-row" id="dp-spouses-row"><span>配偶者:</span><span id="dp-spouses">—</span></div>
+      <div class="detail-row" id="dp-note-row" style="display:none"><span>メモ:</span><span id="dp-note">—</span></div>
+      <button class="btn btn-danger btn-block" id="btn-delete-person" style="margin-top:10px;">削除</button>
+    </div>
+  </div>
+</div>
+
+<script src="src/family-tree-ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "kake-zu",
+  "version": "1.0.0",
+  "description": "家系図作成ツール (Family Tree Creation Tool)",
+  "main": "src/family-tree.js",
+  "scripts": {
+    "test": "node --test tests/family-tree.test.js"
+  },
+  "keywords": ["family-tree", "genealogy", "家系図"],
+  "author": "ykitanob",
+  "license": "MIT"
+}
