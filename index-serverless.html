@@ -493,15 +493,32 @@ FAM001	I002	0	0	2	1"></textarea>
                 coupleMidMap.set(key, { midX: (father.centerX + mother.centerX) / 2, y: y2 });
             });
 
+            const childrenByCouple = new Map();
             entries.forEach(person => {
                 if (person.fatherId !== '0' && person.motherId !== '0' && geometryById[person.id]) {
                     const key = [person.fatherId, person.motherId].sort().join('|');
-                    const coupleMid = coupleMidMap.get(key);
-                    if (coupleMid) {
-                        const child = geometryById[person.id];
-                        edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${coupleMid.midX}" y="${coupleMid.y}" as="sourcePoint"/><mxPoint x="${child.centerX}" y="${child.topY}" as="targetPoint"/></mxGeometry></mxCell>`);
-                    }
+                    if (!childrenByCouple.has(key)) childrenByCouple.set(key, []);
+                    childrenByCouple.get(key).push(geometryById[person.id]);
                 }
+            });
+
+            childrenByCouple.forEach((children, key) => {
+                const coupleMid = coupleMidMap.get(key);
+                if (!coupleMid || children.length === 0) return;
+
+                children.sort((a, b) => a.centerX - b.centerX);
+                const minChildX = children[0].centerX;
+                const maxChildX = children[children.length - 1].centerX;
+                const minChildTopY = Math.min(...children.map(child => child.topY));
+                const siblingY = minChildTopY - 44;
+
+                edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${coupleMid.midX}" y="${coupleMid.y}" as="sourcePoint"/><mxPoint x="${coupleMid.midX}" y="${siblingY}" as="targetPoint"/></mxGeometry></mxCell>`);
+
+                edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${minChildX}" y="${siblingY}" as="sourcePoint"/><mxPoint x="${maxChildX}" y="${siblingY}" as="targetPoint"/></mxGeometry></mxCell>`);
+
+                children.forEach(child => {
+                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${child.centerX}" y="${siblingY}" as="sourcePoint"/><mxPoint x="${child.centerX}" y="${child.topY}" as="targetPoint"/></mxGeometry></mxCell>`);
+                });
             });
 
             const graphModel = `<mxGraphModel dx="1420" dy="780" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0"><root>${rootCells.join('')}${edgeCells.join('')}${nodeCells.join('')}</root></mxGraphModel>`;
