@@ -43,6 +43,9 @@
             flex-wrap: wrap;
             justify-content: center;
         }
+        .button-group.left {
+            justify-content: flex-start;
+        }
         button {
             padding: 10px 16px;
             border: none;
@@ -62,12 +65,16 @@
             margin-top: 8px;
         }
         .ped-grid label { font-size: 12px; color: #555; display: block; margin-bottom: 4px; }
-        .ped-grid input, .ped-grid select, #ped-output, #ped-text-input {
+        .ped-grid input, .ped-grid select, #ped-text-input {
             width: 100%;
             padding: 8px;
             border: 1px solid #cbd5e0;
             border-radius: 6px;
             font-size: 14px;
+        }
+        #ped-text-input {
+            border: 3px solid #667eea;
+            background: #f8faff;
         }
 
         .ped-actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
@@ -105,6 +112,7 @@
     <div class="container">
         <div class="panel">
             <h3>📋 PED入力（Draw.io起動前）</h3>
+            <div style="margin:6px 0 8px 0;font-size:14px;color:#333;font-weight:700;">【一例ずつ入力する場合は以下に入力して、「1人追加」ボタンを押してください】</div>
             <div class="ped-grid">
                 <div><label for="fid">Family ID (FID)</label><input id="fid" value="FAM001"></div>
                 <div><label for="iid">Individual ID (ID)</label><input id="iid" placeholder="I001"></div>
@@ -138,6 +146,7 @@
                 6.表現型 : 未発症＝1、発症＝2 と記載してください。空白の場合は未発症扱いになります<br>
                 7.年齢 : 空白としても問題ありません。兄弟は年齢順にソートします
             </div>
+            <div style="margin:8px 0 4px 0;font-size:14px;color:#333;font-weight:700;">【ここにPEDファイル（タブ区切り）を貼り付けてください】</div>
             <textarea id="ped-text-input" rows="5" placeholder="FAM001	I001	0	0	1	1	72
 FAM001	I002	0	0	2	1	70"></textarea>
             <div class="ped-actions">
@@ -152,12 +161,10 @@ FAM001	I002	0	0	2	1	70"></textarea>
                 </table>
             </div>
 
-            <label for="ped-output" style="display:block;margin-top:8px;font-size:12px;color:#555;">PED形式プレビュー</label>
-            <textarea id="ped-output" rows="5" readonly></textarea>
         </div>
 
         <div class="panel">
-            <div class="button-group">
+            <div class="button-group left">
                 <button class="btn-primary" onclick="openGeneratedPedigree()">PEDから家系図生成して開く</button>
                 <button class="btn-secondary" onclick="saveAsXml()">SaveAsXML</button>
                 <button class="btn-secondary" onclick="saveAsSvg()">SVGとして保存する</button>
@@ -421,9 +428,12 @@ FAM001	I002	0	0	2	1	70"></textarea>
                 </tr>
             `).join('');
 
-            document.getElementById('ped-output').value = pedEntries
-                .map(r => `${r.fid} ${r.id} ${r.fatherId} ${r.motherId} ${r.sex} ${r.phenotype} ${r.age || ''}`.trim())
-                .join('\n');
+            const preview = document.getElementById('ped-output');
+            if (preview) {
+                preview.value = pedEntries
+                    .map(r => `${r.fid} ${r.id} ${r.fatherId} ${r.motherId} ${r.sex} ${r.phenotype} ${r.age || ''}`.trim())
+                    .join('\n');
+            }
         }
 
         function saveAsXml() {
