@@ -547,20 +547,40 @@ FAM001	I002	0	0	2	1"></textarea>
             marriageMap.forEach((pair, key) => {
                 const father = geometryById[pair.fatherId];
                 const mother = geometryById[pair.motherId];
-                const topY = Math.min(father.topY, mother.topY);
-                const yLower = topY - 16;
-                const yUpper = yLower - 8;
+                const level = levelMemo[pair.fatherId] || 0;
+                const rowPeople = levels[level] || [];
+                const minX = Math.min(father.centerX, mother.centerX);
+                const maxX = Math.max(father.centerX, mother.centerX);
+                const hasInterveningNode = rowPeople.some(person => {
+                    if (person.id === pair.fatherId || person.id === pair.motherId) return false;
+                    const node = geometryById[person.id];
+                    if (!node) return false;
+                    return node.centerX > minX && node.centerX < maxX;
+                });
 
-                edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${topY}" as="sourcePoint"/><mxPoint x="${father.centerX}" y="${yLower}" as="targetPoint"/></mxGeometry></mxCell>`);
-                edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${mother.centerX}" y="${topY}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yLower}" as="targetPoint"/></mxGeometry></mxCell>`);
+                if (!hasInterveningNode) {
+                    const y1 = Math.min(father.midY, mother.midY) - 4;
+                    const y2 = y1 + 8;
+                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${y1}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${y1}" as="targetPoint"/></mxGeometry></mxCell>`);
+                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${y2}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${y2}" as="targetPoint"/></mxGeometry></mxCell>`);
+                    coupleMidMap.set(key, { midX: (father.centerX + mother.centerX) / 2, y: y2 });
+                } else {
+                    const fatherBottomY = father.topY + symbolSize;
+                    const motherBottomY = mother.topY + symbolSize;
+                    const baseBottomY = Math.max(fatherBottomY, motherBottomY);
+                    const yUpper = baseBottomY + 16;
+                    const yLower = yUpper + 8;
 
-                edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${yLower}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yLower}" as="targetPoint"/></mxGeometry></mxCell>`);
+                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${fatherBottomY}" as="sourcePoint"/><mxPoint x="${father.centerX}" y="${yUpper}" as="targetPoint"/></mxGeometry></mxCell>`);
+                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${mother.centerX}" y="${motherBottomY}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yUpper}" as="targetPoint"/></mxGeometry></mxCell>`);
 
-                edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${topY}" as="sourcePoint"/><mxPoint x="${father.centerX}" y="${yUpper}" as="targetPoint"/></mxGeometry></mxCell>`);
-                edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${mother.centerX}" y="${topY}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yUpper}" as="targetPoint"/></mxGeometry></mxCell>`);
-                edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${yUpper}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yUpper}" as="targetPoint"/></mxGeometry></mxCell>`);
+                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${yUpper}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yUpper}" as="targetPoint"/></mxGeometry></mxCell>`);
+                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${fatherBottomY}" as="sourcePoint"/><mxPoint x="${father.centerX}" y="${yLower}" as="targetPoint"/></mxGeometry></mxCell>`);
+                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${mother.centerX}" y="${motherBottomY}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yLower}" as="targetPoint"/></mxGeometry></mxCell>`);
+                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${yLower}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yLower}" as="targetPoint"/></mxGeometry></mxCell>`);
 
-                coupleMidMap.set(key, { midX: (father.centerX + mother.centerX) / 2, y: yLower });
+                    coupleMidMap.set(key, { midX: (father.centerX + mother.centerX) / 2, y: yLower });
+                }
             });
 
             const childrenByCouple = new Map();
