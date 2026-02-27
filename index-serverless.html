@@ -120,6 +120,9 @@
             <div class="ped-actions">
                 <button class="btn-primary" onclick="addPedEntry()">1人追加</button>
                 <button class="btn-secondary" onclick="loadSamplePedigree()">3世代7人サンプル</button>
+                <button class="btn-secondary" onclick="loadSample2Gen4()">2世代4人サンプル</button>
+                <button class="btn-secondary" onclick="loadSample3Gen10()">3世代10人サンプル</button>
+                <button class="btn-secondary" onclick="loadSample4Gen20()">4世代20人サンプル</button>
                 <button class="btn-info" onclick="clearPedEntries()">クリア</button>
             </div>
 
@@ -332,6 +335,64 @@ FAM001	I002	0	0	2	1"></textarea>
             renderPedEntries();
         }
 
+        function loadSample2Gen4() {
+            pedEntries.length = 0;
+            pedEntries.push(
+                { fid: 'FAM002', id: 'I001', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1' },
+                { fid: 'FAM002', id: 'I002', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1' },
+                { fid: 'FAM002', id: 'I003', fatherId: 'I001', motherId: 'I002', sex: '1', phenotype: '1' },
+                { fid: 'FAM002', id: 'I004', fatherId: 'I001', motherId: 'I002', sex: '2', phenotype: '2' }
+            );
+            renderPedEntries();
+        }
+
+        function loadSample3Gen10() {
+            pedEntries.length = 0;
+            pedEntries.push(
+                { fid: 'FAM003', id: 'I001', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1' },
+                { fid: 'FAM003', id: 'I002', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1' },
+                { fid: 'FAM003', id: 'I003', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1' },
+                { fid: 'FAM003', id: 'I004', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1' },
+                { fid: 'FAM003', id: 'I005', fatherId: 'I001', motherId: 'I002', sex: '1', phenotype: '1' },
+                { fid: 'FAM003', id: 'I006', fatherId: 'I001', motherId: 'I002', sex: '2', phenotype: '1' },
+                { fid: 'FAM003', id: 'I007', fatherId: 'I003', motherId: 'I004', sex: '1', phenotype: '2' },
+                { fid: 'FAM003', id: 'I008', fatherId: 'I003', motherId: 'I004', sex: '2', phenotype: '1' },
+                { fid: 'FAM003', id: 'I009', fatherId: 'I005', motherId: 'I008', sex: '1', phenotype: '1' },
+                { fid: 'FAM003', id: 'I010', fatherId: 'I005', motherId: 'I008', sex: '2', phenotype: '2' }
+            );
+            renderPedEntries();
+        }
+
+        function loadSample4Gen20() {
+            pedEntries.length = 0;
+            pedEntries.push(
+                { fid: 'FAM004', id: 'I001', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1' },
+                { fid: 'FAM004', id: 'I002', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1' },
+                { fid: 'FAM004', id: 'I003', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1' },
+                { fid: 'FAM004', id: 'I004', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1' },
+                { fid: 'FAM004', id: 'I005', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '2' },
+                { fid: 'FAM004', id: 'I006', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1' },
+
+                { fid: 'FAM004', id: 'I007', fatherId: 'I001', motherId: 'I002', sex: '1', phenotype: '1' },
+                { fid: 'FAM004', id: 'I008', fatherId: 'I001', motherId: 'I002', sex: '2', phenotype: '1' },
+                { fid: 'FAM004', id: 'I009', fatherId: 'I003', motherId: 'I004', sex: '1', phenotype: '1' },
+                { fid: 'FAM004', id: 'I010', fatherId: 'I003', motherId: 'I004', sex: '2', phenotype: '2' },
+                { fid: 'FAM004', id: 'I011', fatherId: 'I005', motherId: 'I006', sex: '1', phenotype: '1' },
+                { fid: 'FAM004', id: 'I012', fatherId: 'I005', motherId: 'I006', sex: '2', phenotype: '1' },
+
+                { fid: 'FAM004', id: 'I013', fatherId: 'I007', motherId: 'I010', sex: '1', phenotype: '1' },
+                { fid: 'FAM004', id: 'I014', fatherId: 'I007', motherId: 'I010', sex: '2', phenotype: '1' },
+                { fid: 'FAM004', id: 'I015', fatherId: 'I009', motherId: 'I008', sex: '1', phenotype: '2' },
+                { fid: 'FAM004', id: 'I016', fatherId: 'I009', motherId: 'I008', sex: '2', phenotype: '1' },
+                { fid: 'FAM004', id: 'I017', fatherId: 'I011', motherId: 'I012', sex: '1', phenotype: '1' },
+
+                { fid: 'FAM004', id: 'I018', fatherId: 'I013', motherId: 'I016', sex: '1', phenotype: '1' },
+                { fid: 'FAM004', id: 'I019', fatherId: 'I013', motherId: 'I016', sex: '2', phenotype: '2' },
+                { fid: 'FAM004', id: 'I020', fatherId: 'I015', motherId: 'I014', sex: '1', phenotype: '1' }
+            );
+            renderPedEntries();
+        }
+
         function renderPedEntries() {
             const tbody = document.getElementById('ped-tbody');
             tbody.innerHTML = pedEntries.map((row, index) => `
@@ -486,11 +547,20 @@ FAM001	I002	0	0	2	1"></textarea>
             marriageMap.forEach((pair, key) => {
                 const father = geometryById[pair.fatherId];
                 const mother = geometryById[pair.motherId];
-                const y1 = Math.min(father.midY, mother.midY) - 4;
-                const y2 = y1 + 8;
-                edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${y1}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${y1}" as="targetPoint"/></mxGeometry></mxCell>`);
-                edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${y2}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${y2}" as="targetPoint"/></mxGeometry></mxCell>`);
-                coupleMidMap.set(key, { midX: (father.centerX + mother.centerX) / 2, y: y2 });
+                const topY = Math.min(father.topY, mother.topY);
+                const yLower = topY - 16;
+                const yUpper = yLower - 8;
+
+                edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${topY}" as="sourcePoint"/><mxPoint x="${father.centerX}" y="${yLower}" as="targetPoint"/></mxGeometry></mxCell>`);
+                edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${mother.centerX}" y="${topY}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yLower}" as="targetPoint"/></mxGeometry></mxCell>`);
+
+                edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${yLower}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yLower}" as="targetPoint"/></mxGeometry></mxCell>`);
+
+                edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${topY}" as="sourcePoint"/><mxPoint x="${father.centerX}" y="${yUpper}" as="targetPoint"/></mxGeometry></mxCell>`);
+                edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${mother.centerX}" y="${topY}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yUpper}" as="targetPoint"/></mxGeometry></mxCell>`);
+                edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${yUpper}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yUpper}" as="targetPoint"/></mxGeometry></mxCell>`);
+
+                coupleMidMap.set(key, { midX: (father.centerX + mother.centerX) / 2, y: yLower });
             });
 
             const childrenByCouple = new Map();
