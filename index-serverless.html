@@ -128,6 +128,16 @@
             </div>
 
             <label for="ped-text-input" style="display:block;margin-top:10px;font-size:12px;color:#555;">PEDテキスト貼り付け（タブ/スペース区切り）</label>
+            <div style="margin:6px 0 8px 0;font-size:12px;color:#555;line-height:1.5;">
+                カラム順: <strong>1.家系ID 2.SampleID 3.父SampleID 4.母SampleID 5.性別 6.表現型 7.年齢</strong><br>
+                1.家系ID<br>
+                2.SampleID<br>
+                3.父SampleID : 不明の場合は <code>0</code> をご指定ください<br>
+                4.母SampleID : 不明の場合は <code>0</code> をご指定ください<br>
+                5.性別 : 男性＝1、女性＝2 と記載してください。空白の場合は、性別不明=ダイヤで表示します<br>
+                6.表現型 : 未発症＝1、発症＝2 と記載してください。空白の場合は未発症扱いになります<br>
+                7.年齢 : 空白としても問題ありません。兄弟は年齢順にソートします
+            </div>
             <textarea id="ped-text-input" rows="5" placeholder="FAM001	I001	0	0	1	1	72
 FAM001	I002	0	0	2	1	70"></textarea>
             <div class="ped-actions">
@@ -370,29 +380,28 @@ FAM001	I002	0	0	2	1	70"></textarea>
         function loadSample4Gen20() {
             pedEntries.length = 0;
             pedEntries.push(
-                { fid: 'FAM004', id: 'I001', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '84' },
-                { fid: 'FAM004', id: 'I002', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '82' },
+                { fid: 'FAM004', id: 'I001', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '82' },
+                { fid: 'FAM004', id: 'I002', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '80' },
                 { fid: 'FAM004', id: 'I003', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '81' },
                 { fid: 'FAM004', id: 'I004', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '79' },
-                { fid: 'FAM004', id: 'I005', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '2', age: '80' },
-                { fid: 'FAM004', id: 'I006', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '78' },
+                { fid: 'FAM004', id: 'I005', fatherId: 'I001', motherId: 'I002', sex: '1', phenotype: '1', age: '52' },
+                { fid: 'FAM004', id: 'I006', fatherId: 'I003', motherId: 'I004', sex: '2', phenotype: '1', age: '49' },
+                { fid: 'FAM004', id: 'I007', fatherId: 'I005', motherId: 'I006', sex: '1', phenotype: '2', age: '24' },
 
-                { fid: 'FAM004', id: 'I007', fatherId: 'I001', motherId: 'I002', sex: '1', phenotype: '1', age: '60' },
-                { fid: 'FAM004', id: 'I008', fatherId: 'I001', motherId: 'I002', sex: '2', phenotype: '1', age: '57' },
-                { fid: 'FAM004', id: 'I009', fatherId: 'I003', motherId: 'I004', sex: '1', phenotype: '1', age: '58' },
-                { fid: 'FAM004', id: 'I010', fatherId: 'I003', motherId: 'I004', sex: '2', phenotype: '2', age: '55' },
-                { fid: 'FAM004', id: 'I011', fatherId: 'I005', motherId: 'I006', sex: '1', phenotype: '1', age: '56' },
-                { fid: 'FAM004', id: 'I012', fatherId: 'I005', motherId: 'I006', sex: '2', phenotype: '1', age: '53' },
+                { fid: 'FAM004', id: 'I008', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '83' },
+                { fid: 'FAM004', id: 'I009', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '81' },
+                { fid: 'FAM004', id: 'I010', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '80' },
+                { fid: 'FAM004', id: 'I011', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '78' },
+                { fid: 'FAM004', id: 'I012', fatherId: 'I008', motherId: 'I009', sex: '2', phenotype: '1', age: '50' },
+                { fid: 'FAM004', id: 'I013', fatherId: 'I010', motherId: 'I011', sex: '1', phenotype: '1', age: '47' },
+                { fid: 'FAM004', id: 'I014', fatherId: 'I012', motherId: 'I013', sex: '2', phenotype: '1', age: '22' },
 
-                { fid: 'FAM004', id: 'I013', fatherId: 'I007', motherId: 'I010', sex: '1', phenotype: '1', age: '34' },
-                { fid: 'FAM004', id: 'I014', fatherId: 'I007', motherId: 'I010', sex: '2', phenotype: '1', age: '31' },
-                { fid: 'FAM004', id: 'I015', fatherId: 'I009', motherId: 'I008', sex: '1', phenotype: '2', age: '33' },
-                { fid: 'FAM004', id: 'I016', fatherId: 'I009', motherId: 'I008', sex: '2', phenotype: '1', age: '30' },
-                { fid: 'FAM004', id: 'I017', fatherId: 'I011', motherId: 'I012', sex: '1', phenotype: '1', age: '28' },
-
-                { fid: 'FAM004', id: 'I018', fatherId: 'I013', motherId: 'I016', sex: '1', phenotype: '1', age: '11' },
-                { fid: 'FAM004', id: 'I019', fatherId: 'I013', motherId: 'I016', sex: '2', phenotype: '2', age: '8' },
-                { fid: 'FAM004', id: 'I020', fatherId: 'I015', motherId: 'I014', sex: '1', phenotype: '1', age: '6' }
+                { fid: 'FAM004', id: 'I015', fatherId: 'I007', motherId: 'I014', sex: '1', phenotype: '1', age: '12' },
+                { fid: 'FAM004', id: 'I016', fatherId: 'I007', motherId: 'I014', sex: '2', phenotype: '1', age: '10' },
+                { fid: 'FAM004', id: 'I017', fatherId: 'I007', motherId: 'I014', sex: '1', phenotype: '2', age: '8' },
+                { fid: 'FAM004', id: 'I018', fatherId: 'I007', motherId: 'I014', sex: '2', phenotype: '1', age: '6' },
+                { fid: 'FAM004', id: 'I019', fatherId: 'I007', motherId: 'I014', sex: '1', phenotype: '1', age: '4' },
+                { fid: 'FAM004', id: 'I020', fatherId: 'I007', motherId: 'I014', sex: '2', phenotype: '1', age: '2' }
             );
             renderPedEntries();
         }
@@ -564,9 +573,12 @@ FAM001	I002	0	0	2	1	70"></textarea>
 
                     const symbolId = nextCellId++;
                     const textId = nextCellId++;
-                    const ageLabel = person.age ? `, A:${person.age}` : '';
+                    const phenotypeLabel = person.phenotype === '2'
+                        ? 'Affected'
+                        : (person.phenotype === '1' ? 'Unaffected' : `P:${person.phenotype}`);
+                    const ageLabel = person.age ? `, Age:${person.age}` : '';
                     nodeCells.push(`<mxCell id="${symbolId}" value="" style="${shapeStyle(person)}" vertex="1" parent="1"><mxGeometry x="${x}" y="${y}" width="${symbolSize}" height="${symbolSize}" as="geometry"/></mxCell>`);
-                    nodeCells.push(`<mxCell id="${textId}" value="${escapeXml(`${person.id} (P:${person.phenotype}${ageLabel})`)}" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=24;" vertex="1" parent="1"><mxGeometry x="${x - 30}" y="${y + symbolSize + 6}" width="150" height="34" as="geometry"/></mxCell>`);
+                    nodeCells.push(`<mxCell id="${textId}" value="${escapeXml(`${person.id} (${phenotypeLabel}${ageLabel})`)}" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=18;" vertex="1" parent="1"><mxGeometry x="${x - 30}" y="${y + symbolSize + 6}" width="150" height="34" as="geometry"/></mxCell>`);
                 });
             });
 
