@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家系図作成 - Draw.io（サーバーレス版）</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header, footer {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 14px 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h1 { color: #333; font-size: 26px; margin-bottom: 6px; }
+        .subtitle { color: #666; font-size: 14px; }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 16px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 14px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .btn-primary { background: #667eea; }
+        .btn-secondary { background: #48bb78; }
+        .btn-info { background: #4299e1; }
+
+        .ped-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .ped-grid label { font-size: 12px; color: #555; display: block; margin-bottom: 4px; }
+        .ped-grid input, .ped-grid select, #ped-output, #ped-text-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .ped-actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .ped-table { margin-top: 10px; overflow-x: auto; }
+        .ped-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .ped-table th, .ped-table td {
+            border: 1px solid #e2e8f0;
+            padding: 6px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .ped-table th { background: #f7fafc; }
+
+        .editor-container {
+            flex: 1;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            min-height: 620px;
+        }
+        #drawio-frame { width: 100%; height: 100%; border: none; }
+
+        .help { font-size: 13px; color: #444; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🌳 家系図作成ツール（サーバーレス）</h1>
+        <p class="subtitle">同一ページ内で draw.io を iframe 埋め込みして動作します</p>
+    </header>
+
+    <div class="container">
+        <div class="panel">
+            <h3>📋 PED入力（Draw.io起動前）</h3>
+            <div class="ped-grid">
+                <div><label for="fid">Family ID (FID)</label><input id="fid" value="FAM001"></div>
+                <div><label for="iid">Individual ID (ID)</label><input id="iid" placeholder="I001"></div>
+                <div><label for="pid">Paternal ID (父ID)</label><input id="pid" value="0"></div>
+                <div><label for="mid">Maternal ID (母ID)</label><input id="mid" value="0"></div>
+                <div>
+                    <label for="sex">Sex (性別)</label>
+                    <select id="sex"><option value="1">1=男性</option><option value="2">2=女性</option><option value="0">0=不明</option></select>
+                </div>
+                <div><label for="pheno">Phenotype (表現型)</label><input id="pheno" value="1"></div>
+            </div>
+
+            <div class="ped-actions">
+                <button class="btn-primary" onclick="addPedEntry()">1人追加</button>
+                <button class="btn-secondary" onclick="loadSamplePedigree()">3世代7人サンプル</button>
+                <button class="btn-info" onclick="clearPedEntries()">クリア</button>
+            </div>
+
+            <label for="ped-text-input" style="display:block;margin-top:10px;font-size:12px;color:#555;">PEDテキスト貼り付け（タブ/スペース区切り）</label>
+            <textarea id="ped-text-input" rows="5" placeholder="FAM001	I001	0	0	1	1
+FAM001	I002	0	0	2	1"></textarea>
+            <div class="ped-actions">
+                <button class="btn-info" onclick="importPedText(true)">貼り付け内容で置き換える</button>
+                <button class="btn-info" onclick="importPedText(false)">貼り付け内容を追加する</button>
+            </div>
+
+            <div class="ped-table">
+                <table>
+                    <thead><tr><th>FID</th><th>ID</th><th>父ID</th><th>母ID</th><th>性別</th><th>表現型</th><th>削除</th></tr></thead>
+                    <tbody id="ped-tbody"></tbody>
+                </table>
+            </div>
+
+            <label for="ped-output" style="display:block;margin-top:8px;font-size:12px;color:#555;">PED形式プレビュー</label>
+            <textarea id="ped-output" rows="5" readonly></textarea>
+        </div>
+
+        <div class="panel">
+            <div class="button-group">
+                <button class="btn-primary" onclick="openGeneratedPedigree()">PEDから家系図生成して開く</button>
+                <button class="btn-secondary" onclick="saveAsXml()">SaveAsXML</button>
+                <button class="btn-secondary" onclick="saveAsSvg()">SVGとして保存する</button>
+            </div>
+        </div>
+
+        <div class="editor-container">
+            <div id="connect-tip" style="display:none;margin:10px 10px 0 10px;padding:8px 10px;background:#fff3cd;border:1px solid #ffe69c;border-radius:6px;color:#664d03;font-size:13px;"></div>
+            <iframe id="drawio-frame" src=""></iframe>
+        </div>
+    </div>
+
+    <footer>
+        <p>Powered by diagrams.net</p>
+    </footer>
+
+    <script>
+        const pedEntries = [];
+        let pendingXmlDownload = false;
+        let currentXmlSpinKey = null;
+        function getLibraryUrl() {
+            if (window.location.protocol.startsWith('http')) {
+                    return `${getSiteBaseUrl()}/family-shapes-library.xml`;
+            }
+            return null;
+        }
+
+        function getLocalDrawioBaseUrl() {
+            if (window.location.protocol.startsWith('http')) {
+                    return `${getSiteBaseUrl()}/drawio-webapp/index.html`;
+            }
+            return null;
+        }
+
+            function getSiteBaseUrl() {
+                const path = window.location.pathname || '/';
+                const basePath = path.replace(/\/[^/]*$/, '');
+                return `${window.location.origin}${basePath}`;
+            }
+
+        function getDrawioUrl(params = '') {
+            const libUrl = getLibraryUrl();
+            const clibs = libUrl ? `&clibs=U${encodeURIComponent(libUrl)}` : '';
+            const query = `?embed=1&ui=min&proto=json&spin=1&lang=ja&splash=0&local=1&libraries=1${clibs}${params}`;
+            const localBase = getLocalDrawioBaseUrl();
+            if (localBase) return `${localBase}${query}`;
+            return `https://app.diagrams.net/${query}`;
+        }
+
+        function getExternalDrawioUrl(params = '') {
+            const libUrl = getLibraryUrl();
+            const clibs = libUrl ? `&clibs=U${encodeURIComponent(libUrl)}` : '';
+            return `https://app.diagrams.net/?ui=atlas&lang=ja&splash=0&libraries=1${clibs}${params}`;
+        }
+
+        function openExternalDrawioTab() {
+            const url = getExternalDrawioUrl('');
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+
+        function openExternalDrawioWithXml(modelXml) {
+            const fullUrl = getExternalDrawioUrl(`&xml=${encodeURIComponent(modelXml)}`);
+            window.open(fullUrl, '_blank', 'noopener,noreferrer');
+        }
+
+        async function openGeneratedPedigree() {
+            if (pedEntries.length === 0) {
+                alert('PEDデータが空です。まず「1人追加」または「3世代7人サンプル」を実行してください。');
+                return;
+            }
+            const modelXml = buildPedigreeMxGraphModel(pedEntries);
+            await launchDrawioWithOptionalXml(modelXml);
+        }
+
+        async function launchDrawioWithOptionalXml(modelXml) {
+            const iframe = document.getElementById('drawio-frame');
+            const encodedXml = modelXml ? `&xml=${encodeURIComponent(modelXml)}` : '';
+            const tip = document.getElementById('connect-tip');
+
+            if (tip) {
+                tip.style.display = 'none';
+            }
+
+            iframe.onload = function () {
+                if (!modelXml) return;
+                const payload = JSON.stringify({ action: 'load', autosave: 1, xml: modelXml });
+                setTimeout(() => iframe.contentWindow.postMessage(payload, '*'), 1200);
+                setTimeout(() => iframe.contentWindow.postMessage(payload, '*'), 2600);
+            };
+
+            iframe.src = getDrawioUrl(`${encodedXml}&launch=${Date.now()}`);
+        }
+
+        function addPedEntry() {
+            const entry = {
+                fid: document.getElementById('fid').value.trim() || 'FAM001',
+                id: document.getElementById('iid').value.trim(),
+                fatherId: document.getElementById('pid').value.trim() || '0',
+                motherId: document.getElementById('mid').value.trim() || '0',
+                sex: document.getElementById('sex').value,
+                phenotype: document.getElementById('pheno').value.trim() || '1'
+            };
+
+            if (!entry.id) { alert('Individual ID (ID) を入力してください。'); return; }
+            if (pedEntries.some(r => r.id === entry.id)) { alert('同じIDが既に存在します。'); return; }
+
+            pedEntries.push(entry);
+            renderPedEntries();
+            document.getElementById('iid').value = '';
+            document.getElementById('pid').value = '0';
+            document.getElementById('mid').value = '0';
+            document.getElementById('sex').value = '1';
+            document.getElementById('pheno').value = '1';
+        }
+
+        function removePedEntry(index) {
+            pedEntries.splice(index, 1);
+            renderPedEntries();
+        }
+
+        function clearPedEntries() {
+            pedEntries.length = 0;
+            renderPedEntries();
+        }
+
+        function importPedText(replaceExisting) {
+            const text = (document.getElementById('ped-text-input').value || '').trim();
+            if (!text) {
+                alert('PEDテキストを貼り付けてください。');
+                return;
+            }
+
+            const lines = text.split(/\r?\n/);
+            const imported = [];
+            const existingIds = new Set(replaceExisting ? [] : pedEntries.map(item => item.id));
+
+            for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+                const line = lines[lineIndex].trim();
+                if (!line || line.startsWith('#')) continue;
+
+                const columns = line.split(/\s+/);
+                if (columns.length < 6) {
+                    alert(`PED形式エラー: ${lineIndex + 1}行目は6列以上必要です。`);
+                    return;
+                }
+
+                const record = {
+                    fid: columns[0],
+                    id: columns[1],
+                    fatherId: columns[2] || '0',
+                    motherId: columns[3] || '0',
+                    sex: columns[4] || '0',
+                    phenotype: columns[5] || '1'
+                };
+
+                if (!record.id) {
+                    alert(`PED形式エラー: ${lineIndex + 1}行目のIDが空です。`);
+                    return;
+                }
+                if (existingIds.has(record.id)) {
+                    alert(`重複IDエラー: ${record.id} が重複しています。`);
+                    return;
+                }
+
+                existingIds.add(record.id);
+                imported.push(record);
+            }
+
+            if (replaceExisting) {
+                pedEntries.length = 0;
+            }
+            pedEntries.push(...imported);
+            renderPedEntries();
+        }
+
+        function loadSamplePedigree() {
+            pedEntries.length = 0;
+            pedEntries.push(
+                { fid: 'FAM001', id: 'I001', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1' },
+                { fid: 'FAM001', id: 'I002', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1' },
+                { fid: 'FAM001', id: 'I003', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1' },
+                { fid: 'FAM001', id: 'I004', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1' },
+                { fid: 'FAM001', id: 'I005', fatherId: 'I001', motherId: 'I002', sex: '1', phenotype: '1' },
+                { fid: 'FAM001', id: 'I006', fatherId: 'I003', motherId: 'I004', sex: '2', phenotype: '1' },
+                { fid: 'FAM001', id: 'I007', fatherId: 'I005', motherId: 'I006', sex: '1', phenotype: '2' }
+            );
+            renderPedEntries();
+        }
+
+        function renderPedEntries() {
+            const tbody = document.getElementById('ped-tbody');
+            tbody.innerHTML = pedEntries.map((row, index) => `
+                <tr>
+                    <td>${row.fid}</td>
+                    <td>${row.id}</td>
+                    <td>${row.fatherId}</td>
+                    <td>${row.motherId}</td>
+                    <td>${row.sex}</td>
+                    <td>${row.phenotype}</td>
+                    <td><button onclick="removePedEntry(${index})" style="padding:4px 8px;">削除</button></td>
+                </tr>
+            `).join('');
+
+            document.getElementById('ped-output').value = pedEntries
+                .map(r => `${r.fid} ${r.id} ${r.fatherId} ${r.motherId} ${r.sex} ${r.phenotype}`)
+                .join('\n');
+        }
+
+        function saveAsXml() {
+            const iframe = document.getElementById('drawio-frame');
+            if (!iframe.src) { alert('先にdraw.ioを開いてください。'); return; }
+
+            pendingXmlDownload = true;
+            currentXmlSpinKey = `xml-${Date.now()}`;
+
+            iframe.contentWindow.postMessage(JSON.stringify({ action: 'save', exit: false }), '*');
+            setTimeout(() => {
+                if (!pendingXmlDownload) return;
+                iframe.contentWindow.postMessage(JSON.stringify({ action: 'export', format: 'xml', spinKey: currentXmlSpinKey }), '*');
+            }, 1500);
+        }
+
+        function saveAsSvg() {
+            const iframe = document.getElementById('drawio-frame');
+            if (!iframe.src) { alert('先にdraw.ioを開いてください。'); return; }
+
+            iframe.contentWindow.postMessage(JSON.stringify({ action: 'export', format: 'svg', spinKey: `svg-${Date.now()}` }), '*');
+        }
+
+        function buildPedigreeMxGraphModel(entries) {
+            const peopleById = Object.fromEntries(entries.map(person => [person.id, person]));
+            const levelMemo = {};
+
+            function getLevel(personId, stack = new Set()) {
+                if (!personId || personId === '0' || !peopleById[personId]) return 0;
+                if (levelMemo[personId] !== undefined) return levelMemo[personId];
+                if (stack.has(personId)) return 0;
+                stack.add(personId);
+
+                const person = peopleById[personId];
+                const fatherLevel = person.fatherId && person.fatherId !== '0' ? getLevel(person.fatherId, stack) : 0;
+                const motherLevel = person.motherId && person.motherId !== '0' ? getLevel(person.motherId, stack) : 0;
+                stack.delete(personId);
+
+                const hasKnownParent = (person.fatherId && person.fatherId !== '0' && peopleById[person.fatherId]) ||
+                                       (person.motherId && person.motherId !== '0' && peopleById[person.motherId]);
+                levelMemo[personId] = hasKnownParent ? Math.max(fatherLevel, motherLevel) + 1 : 0;
+                return levelMemo[personId];
+            }
+
+            entries.forEach(person => getLevel(person.id));
+
+            const levels = {};
+            entries.forEach(person => {
+                const level = levelMemo[person.id] || 0;
+                if (!levels[level]) levels[level] = [];
+                levels[level].push(person);
+            });
+            Object.values(levels).forEach(group => group.sort((a, b) => a.id.localeCompare(b.id)));
+
+            const pageWidth = 1600;
+            const symbolYStart = 60;
+            const rowGap = 240;
+            const colGap = 180;
+            const symbolSize = 80;
+
+            const geometryById = {};
+            const rootCells = ['<mxCell id="0"/>', '<mxCell id="1" parent="0"/>'];
+            const edgeCells = [];
+            const nodeCells = [];
+            let nextCellId = 2;
+
+            function shapeStyle(person) {
+                const affected = person.phenotype === '2';
+                if (person.sex === '1') return `rounded=0;whiteSpace=wrap;html=1;strokeColor=#000000;strokeWidth=2;fillColor=${affected ? '#000000' : '#ffffff'};`;
+                if (person.sex === '2') return `ellipse;whiteSpace=wrap;html=1;aspect=fixed;strokeColor=#000000;strokeWidth=2;fillColor=${affected ? '#000000' : '#ffffff'};`;
+                return `rhombus;whiteSpace=wrap;html=1;strokeColor=#000000;strokeWidth=2;fillColor=${affected ? '#000000' : '#ffffff'};`;
+            }
+
+            Object.keys(levels).map(Number).sort((a, b) => a - b).forEach(level => {
+                const group = levels[level];
+                let centers = [];
+
+                if (level === 0) {
+                    const count = group.length;
+                    const rowWidth = symbolSize + Math.max(0, count - 1) * colGap;
+                    const startX = Math.round((pageWidth - rowWidth) / 2);
+                    centers = group.map((_, index) => startX + index * colGap + symbolSize / 2);
+                } else {
+                    const minGap = 140;
+                    const preferred = group.map(person => {
+                        const father = person.fatherId && person.fatherId !== '0' ? geometryById[person.fatherId] : null;
+                        const mother = person.motherId && person.motherId !== '0' ? geometryById[person.motherId] : null;
+                        let preferredCenter = pageWidth / 2;
+                        if (father && mother) preferredCenter = (father.centerX + mother.centerX) / 2;
+                        else if (father) preferredCenter = father.centerX;
+                        else if (mother) preferredCenter = mother.centerX;
+                        return { person, preferredCenter };
+                    });
+
+                    preferred.sort((a, b) => (a.preferredCenter - b.preferredCenter) || a.person.id.localeCompare(b.person.id));
+                    const assigned = [];
+                    let prev = -Infinity;
+                    preferred.forEach(item => {
+                        const value = Math.max(item.preferredCenter, prev + minGap);
+                        assigned.push({ person: item.person, center: value });
+                        prev = value;
+                    });
+
+                    const minCenter = Math.min(...assigned.map(a => a.center));
+                    const maxCenter = Math.max(...assigned.map(a => a.center));
+                    const shift = (pageWidth / 2) - ((minCenter + maxCenter) / 2);
+
+                    const centerById = {};
+                    assigned.forEach(item => { centerById[item.person.id] = item.center + shift; });
+                    centers = group.map(person => centerById[person.id]);
+                }
+
+                group.forEach((person, index) => {
+                    const centerX = centers[index];
+                    const x = Math.round(centerX - symbolSize / 2);
+                    const y = symbolYStart + level * rowGap;
+                    geometryById[person.id] = { x, y, centerX: x + symbolSize / 2, topY: y, midY: y + symbolSize / 2 };
+
+                    const symbolId = nextCellId++;
+                    const textId = nextCellId++;
+                    nodeCells.push(`<mxCell id="${symbolId}" value="" style="${shapeStyle(person)}" vertex="1" parent="1"><mxGeometry x="${x}" y="${y}" width="${symbolSize}" height="${symbolSize}" as="geometry"/></mxCell>`);
+                    nodeCells.push(`<mxCell id="${textId}" value="${escapeXml(`${person.id} (P:${person.phenotype})`)}" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;" vertex="1" parent="1"><mxGeometry x="${x - 20}" y="${y + symbolSize + 6}" width="120" height="30" as="geometry"/></mxCell>`);
+                });
+            });
+
+            const marriageMap = new Map();
+            entries.forEach(person => {
+                if (person.fatherId !== '0' && person.motherId !== '0' && geometryById[person.fatherId] && geometryById[person.motherId]) {
+                    const key = [person.fatherId, person.motherId].sort().join('|');
+                    if (!marriageMap.has(key)) marriageMap.set(key, { fatherId: person.fatherId, motherId: person.motherId });
+                }
+            });
+
+            const coupleMidMap = new Map();
+            marriageMap.forEach((pair, key) => {
+                const father = geometryById[pair.fatherId];
+                const mother = geometryById[pair.motherId];
+                const y1 = Math.min(father.midY, mother.midY) - 4;
+                const y2 = y1 + 8;
+                edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${y1}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${y1}" as="targetPoint"/></mxGeometry></mxCell>`);
+                edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${y2}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${y2}" as="targetPoint"/></mxGeometry></mxCell>`);
+                coupleMidMap.set(key, { midX: (father.centerX + mother.centerX) / 2, y: y2 });
+            });
+
+            entries.forEach(person => {
+                if (person.fatherId !== '0' && person.motherId !== '0' && geometryById[person.id]) {
+                    const key = [person.fatherId, person.motherId].sort().join('|');
+                    const coupleMid = coupleMidMap.get(key);
+                    if (coupleMid) {
+                        const child = geometryById[person.id];
+                        edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${coupleMid.midX}" y="${coupleMid.y}" as="sourcePoint"/><mxPoint x="${child.centerX}" y="${child.topY}" as="targetPoint"/></mxGeometry></mxCell>`);
+                    }
+                }
+            });
+
+            const graphModel = `<mxGraphModel dx="1420" dy="780" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0"><root>${rootCells.join('')}${edgeCells.join('')}${nodeCells.join('')}</root></mxGraphModel>`;
+            return `<mxfile host="app.diagrams.net" modified="${new Date().toISOString()}" agent="5.0" version="24.0.0" type="device"><diagram id="pedigree" name="PED Family">${graphModel}</diagram></mxfile>`;
+        }
+
+        function escapeXml(text) {
+            return String(text || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+        }
+
+        function dataUrlToBlob(dataUrl) {
+            const raw = String(dataUrl || '');
+            const m = raw.match(/^data:([^;,]+)?(;base64)?,(.*)$/s);
+            if (!m) return null;
+            const mime = m[1] || 'application/octet-stream';
+            const isBase64 = !!m[2];
+            const payload = m[3] || '';
+            if (isBase64) {
+                const bytes = atob(payload);
+                const arr = new Uint8Array(bytes.length);
+                for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+                return new Blob([arr], { type: mime });
+            }
+            return new Blob([decodeURIComponent(payload)], { type: mime });
+        }
+
+        function triggerDownload(blob, fileName) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        window.addEventListener('message', async (event) => {
+            if (!event.data) return;
+            let msg = null;
+            if (typeof event.data === 'string') {
+                try { msg = JSON.parse(event.data); } catch { return; }
+            } else if (typeof event.data === 'object') {
+                msg = event.data;
+            }
+            if (!msg || !msg.event) return;
+
+            if (msg.event === 'save' && pendingXmlDownload) {
+                const xml = msg.xml || '';
+                if (xml) {
+                    pendingXmlDownload = false;
+                    triggerDownload(new Blob([xml], { type: 'application/xml;charset=utf-8' }), `pedigree-${new Date().toISOString().replace(/[:.]/g, '-')}.drawio`);
+                }
+                return;
+            }
+
+            if (msg.event === 'export' && msg.data) {
+                if (pendingXmlDownload && currentXmlSpinKey && msg.spinKey === currentXmlSpinKey) {
+                    pendingXmlDownload = false;
+                    const xmlBlob = dataUrlToBlob(msg.data) || new Blob([String(msg.data)], { type: 'application/xml;charset=utf-8' });
+                    triggerDownload(xmlBlob, `pedigree-${new Date().toISOString().replace(/[:.]/g, '-')}.drawio`);
+                    return;
+                }
+
+                const raw = String(msg.data);
+                if (raw.startsWith('data:image/svg')) {
+                    const svgBlob = dataUrlToBlob(raw);
+                    if (svgBlob) {
+                        triggerDownload(svgBlob, `pedigree-${new Date().toISOString().replace(/[:.]/g, '-')}.svg`);
+                        return;
+                    }
+                }
+
+                if (raw.startsWith('<svg')) {
+                    triggerDownload(new Blob([raw], { type: 'image/svg+xml;charset=utf-8' }), `pedigree-${new Date().toISOString().replace(/[:.]/g, '-')}.svg`);
+                }
+            }
+        });
+
+        renderPedEntries();
+    </script>
+</body>
+</html>
