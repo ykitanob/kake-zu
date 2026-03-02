@@ -185,6 +185,7 @@ FAM001	I002	0	0	2	1	70"></textarea>
         const pedEntries = [];
         let pendingXmlDownload = false;
         let currentXmlSpinKey = null;
+        let xmlExportRetryCount = 0;
         function getLibraryUrl() {
             if (window.location.protocol.startsWith('http')) {
                     return `${getSiteBaseUrl()}/family-shapes-library.xml`;
@@ -442,10 +443,12 @@ FAM001	I002	0	0	2	1	70"></textarea>
 
             pendingXmlDownload = true;
             currentXmlSpinKey = `xml-${Date.now()}`;
+            xmlExportRetryCount = 0;
 
-            iframe.contentWindow.postMessage(JSON.stringify({ action: 'save', exit: false }), '*');
+            iframe.contentWindow.postMessage(JSON.stringify({ action: 'export', format: 'xml', spinKey: currentXmlSpinKey }), '*');
             setTimeout(() => {
                 if (!pendingXmlDownload) return;
+                xmlExportRetryCount++;
                 iframe.contentWindow.postMessage(JSON.stringify({ action: 'export', format: 'xml', spinKey: currentXmlSpinKey }), '*');
             }, 1500);
         }
@@ -728,14 +731,35 @@ FAM001	I002	0	0	2	1	70"></textarea>
             }
 
             if (msg.event === 'export' && msg.data) {
-                if (pendingXmlDownload && currentXmlSpinKey && msg.spinKey === currentXmlSpinKey) {
+                const raw = String(msg.data);
+
+                if (pendingXmlDownload) {
+                    const looksLikeXml = raw.includes('<mxfile') ||
+                        raw.startsWith('<?xml') ||
+                        raw.startsWith('<mxGraphModel') ||
+                        raw.startsWith('data:application/xml') ||
+                        raw.startsWith('data:text/xml') ||
+                        raw.startsWith('data:text/plain');
+
+                    if (looksLikeXml || (currentXmlSpinKey && msg.spinKey === currentXmlSpinKey && !raw.startsWith('data:image/svg'))) {
+                        pendingXmlDownload = false;
+                        const xmlBlob = dataUrlToBlob(raw) || new Blob([raw], { type: 'application/xml;charset=utf-8' });
+                        triggerDownload(xmlBlob, `pedigree-${new Date().toISOString().replace(/[:.]/g, '-')}.drawio`);
+                        return;
+                    }
+
+                    if (xmlExportRetryCount < 2) {
+                        xmlExportRetryCount++;
+                        const iframe = document.getElementById('drawio-frame');
+                        iframe.contentWindow.postMessage(JSON.stringify({ action: 'export', format: 'xml', spinKey: currentXmlSpinKey }), '*');
+                        return;
+                    }
+
                     pendingXmlDownload = false;
-                    const xmlBlob = dataUrlToBlob(msg.data) || new Blob([String(msg.data)], { type: 'application/xml;charset=utf-8' });
-                    triggerDownload(xmlBlob, `pedigree-${new Date().toISOString().replace(/[:.]/g, '-')}.drawio`);
+                    alert('XML保存に失敗しました。もう一度 SaveAsXML をお試しください。');
                     return;
                 }
 
-                const raw = String(msg.data);
                 if (raw.startsWith('data:image/svg')) {
                     const svgBlob = dataUrlToBlob(raw);
                     if (svgBlob) {
