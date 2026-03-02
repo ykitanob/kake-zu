@@ -166,7 +166,7 @@ FAM001	I002	0	0	2	1	70"></textarea>
         <div class="panel">
             <div class="button-group left">
                 <button class="btn-primary" onclick="openGeneratedPedigree()">PEDから家系図生成して開く</button>
-                <button class="btn-secondary" onclick="saveAsXml()">SaveAsXML</button>
+                <button class="btn-secondary" onclick="saveAsPng()">PNGで保存する</button>
                 <button class="btn-secondary" onclick="saveAsSvg()">SVGとして保存する</button>
             </div>
         </div>
@@ -185,7 +185,8 @@ FAM001	I002	0	0	2	1	70"></textarea>
         const pedEntries = [];
         let pendingXmlDownload = false;
         let currentXmlSpinKey = null;
-        let xmlExportRetryCount = 0;
+        let pendingPngDownload = false;
+        let currentPngSpinKey = null;
         function getLibraryUrl() {
             if (window.location.protocol.startsWith('http')) {
                     return `${getSiteBaseUrl()}/family-shapes-library.xml`;
@@ -443,14 +444,8 @@ FAM001	I002	0	0	2	1	70"></textarea>
 
             pendingXmlDownload = true;
             currentXmlSpinKey = `xml-${Date.now()}`;
-            xmlExportRetryCount = 0;
-
+            iframe.contentWindow.postMessage(JSON.stringify({ action: 'save', exit: false }), '*');
             iframe.contentWindow.postMessage(JSON.stringify({ action: 'export', format: 'xml', spinKey: currentXmlSpinKey }), '*');
-            setTimeout(() => {
-                if (!pendingXmlDownload) return;
-                xmlExportRetryCount++;
-                iframe.contentWindow.postMessage(JSON.stringify({ action: 'export', format: 'xml', spinKey: currentXmlSpinKey }), '*');
-            }, 1500);
         }
 
         function saveAsSvg() {
@@ -460,9 +455,19 @@ FAM001	I002	0	0	2	1	70"></textarea>
             iframe.contentWindow.postMessage(JSON.stringify({ action: 'export', format: 'svg', spinKey: `svg-${Date.now()}` }), '*');
         }
 
+        function saveAsPng() {
+            const iframe = document.getElementById('drawio-frame');
+            if (!iframe.src) { alert('先にdraw.ioを開いてください。'); return; }
+
+            pendingPngDownload = true;
+            currentPngSpinKey = `png-${Date.now()}`;
+            iframe.contentWindow.postMessage(JSON.stringify({ action: 'export', format: 'png', spinKey: currentPngSpinKey, border: 0, scale: 2, transparent: false }), '*');
+        }
+
         function buildPedigreeMxGraphModel(entries) {
             const peopleById = Object.fromEntries(entries.map(person => [person.id, person]));
             const levelMemo = {};
+            const pedId = (entries.find(person => person && person.fid && String(person.fid).trim()) || {}).fid || 'N/A';
 
             function getParentPairKey(person) {
                 if (!person) return '';
@@ -619,27 +624,20 @@ FAM001	I002	0	0	2	1	70"></textarea>
                 });
 
                 if (!hasInterveningNode) {
-                    const y1 = Math.min(father.midY, mother.midY) - 4;
-                    const y2 = y1 + 8;
-                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${y1}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${y1}" as="targetPoint"/></mxGeometry></mxCell>`);
-                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${y2}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${y2}" as="targetPoint"/></mxGeometry></mxCell>`);
-                    coupleMidMap.set(key, { midX: (father.centerX + mother.centerX) / 2, y: y2 });
+                    const yMarriage = Math.min(father.midY, mother.midY);
+                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${yMarriage}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yMarriage}" as="targetPoint"/></mxGeometry></mxCell>`);
+                    coupleMidMap.set(key, { midX: (father.centerX + mother.centerX) / 2, y: yMarriage });
                 } else {
                     const fatherBottomY = father.topY + symbolSize;
                     const motherBottomY = mother.topY + symbolSize;
                     const baseBottomY = Math.max(fatherBottomY, motherBottomY);
-                    const yUpper = baseBottomY + 56;
-                    const yLower = yUpper + 8;
+                    const yMarriage = baseBottomY + 56;
 
-                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${fatherBottomY}" as="sourcePoint"/><mxPoint x="${father.centerX}" y="${yUpper}" as="targetPoint"/></mxGeometry></mxCell>`);
-                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${mother.centerX}" y="${motherBottomY}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yUpper}" as="targetPoint"/></mxGeometry></mxCell>`);
+                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${fatherBottomY}" as="sourcePoint"/><mxPoint x="${father.centerX}" y="${yMarriage}" as="targetPoint"/></mxGeometry></mxCell>`);
+                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${mother.centerX}" y="${motherBottomY}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yMarriage}" as="targetPoint"/></mxGeometry></mxCell>`);
+                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${yMarriage}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yMarriage}" as="targetPoint"/></mxGeometry></mxCell>`);
 
-                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${yUpper}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yUpper}" as="targetPoint"/></mxGeometry></mxCell>`);
-                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${fatherBottomY}" as="sourcePoint"/><mxPoint x="${father.centerX}" y="${yLower}" as="targetPoint"/></mxGeometry></mxCell>`);
-                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${mother.centerX}" y="${motherBottomY}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yLower}" as="targetPoint"/></mxGeometry></mxCell>`);
-                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${yLower}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yLower}" as="targetPoint"/></mxGeometry></mxCell>`);
-
-                    coupleMidMap.set(key, { midX: (father.centerX + mother.centerX) / 2, y: yLower });
+                    coupleMidMap.set(key, { midX: (father.centerX + mother.centerX) / 2, y: yMarriage });
                 }
             });
 
@@ -670,6 +668,14 @@ FAM001	I002	0	0	2	1	70"></textarea>
                     edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${child.centerX}" y="${siblingY}" as="sourcePoint"/><mxPoint x="${child.centerX}" y="${child.topY}" as="targetPoint"/></mxGeometry></mxCell>`);
                 });
             });
+
+            const topLevelPeople = entries.filter(person => (levelMemo[person.id] || 0) === 0 && geometryById[person.id]);
+            const topLevelLeftX = topLevelPeople.length > 0
+                ? Math.min(...topLevelPeople.map(person => geometryById[person.id].x))
+                : 20;
+            const pedTitleX = Math.max(0, Math.round(topLevelLeftX - (symbolSize * 4)));
+            const pedTitleId = nextCellId++;
+            nodeCells.push(`<mxCell id="${pedTitleId}" value="${escapeXml(`PEDID: ${pedId}`)}" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=30;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="${pedTitleX}" y="12" width="520" height="48" as="geometry"/></mxCell>`);
 
             const graphModel = `<mxGraphModel dx="1420" dy="780" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0"><root>${rootCells.join('')}${edgeCells.join('')}${nodeCells.join('')}</root></mxGraphModel>`;
             return `<mxfile host="app.diagrams.net" modified="${new Date().toISOString()}" agent="5.0" version="24.0.0" type="device"><diagram id="pedigree" name="PED Family">${graphModel}</diagram></mxfile>`;
@@ -734,29 +740,43 @@ FAM001	I002	0	0	2	1	70"></textarea>
                 const raw = String(msg.data);
 
                 if (pendingXmlDownload) {
-                    const looksLikeXml = raw.includes('<mxfile') ||
-                        raw.startsWith('<?xml') ||
-                        raw.startsWith('<mxGraphModel') ||
-                        raw.startsWith('data:application/xml') ||
-                        raw.startsWith('data:text/xml') ||
-                        raw.startsWith('data:text/plain');
-
-                    if (looksLikeXml || (currentXmlSpinKey && msg.spinKey === currentXmlSpinKey && !raw.startsWith('data:image/svg'))) {
-                        pendingXmlDownload = false;
-                        const xmlBlob = dataUrlToBlob(raw) || new Blob([raw], { type: 'application/xml;charset=utf-8' });
-                        triggerDownload(xmlBlob, `pedigree-${new Date().toISOString().replace(/[:.]/g, '-')}.drawio`);
-                        return;
-                    }
-
-                    if (xmlExportRetryCount < 2) {
-                        xmlExportRetryCount++;
-                        const iframe = document.getElementById('drawio-frame');
-                        iframe.contentWindow.postMessage(JSON.stringify({ action: 'export', format: 'xml', spinKey: currentXmlSpinKey }), '*');
+                    if (raw.startsWith('data:image/svg') || raw.startsWith('<svg')) {
                         return;
                     }
 
                     pendingXmlDownload = false;
-                    alert('XML保存に失敗しました。もう一度 SaveAsXML をお試しください。');
+                    const xmlBlob = dataUrlToBlob(raw) || new Blob([raw], { type: 'application/xml;charset=utf-8' });
+                    triggerDownload(xmlBlob, `pedigree-${new Date().toISOString().replace(/[:.]/g, '-')}.drawio`);
+                    return;
+                }
+
+                if (pendingPngDownload) {
+                    if (currentPngSpinKey && msg.spinKey && msg.spinKey !== currentPngSpinKey) {
+                        return;
+                    }
+
+                    let pngBlob = null;
+                    if (raw.startsWith('data:image/png')) {
+                        pngBlob = dataUrlToBlob(raw);
+                    } else if (raw.startsWith('blob:') || raw.startsWith('http')) {
+                        try {
+                            const response = await fetch(raw);
+                            const fetchedBlob = await response.blob();
+                            if (fetchedBlob && fetchedBlob.size > 0) {
+                                pngBlob = fetchedBlob;
+                            }
+                        } catch {
+                        }
+                    }
+
+                    pendingPngDownload = false;
+                    currentPngSpinKey = null;
+
+                    if (pngBlob && pngBlob.size > 0) {
+                        triggerDownload(pngBlob, `pedigree-${new Date().toISOString().replace(/[:.]/g, '-')}.png`);
+                    } else {
+                        alert('PNG保存に失敗しました。draw.ioのファイルメニューからPNG保存をお試しください。');
+                    }
                     return;
                 }
 
