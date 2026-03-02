@@ -4,43 +4,43 @@
 		"title": "Male",
 		"w": 80,
 		"h": 80,
-		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;\" vertex=\"1\" parent=\"2\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell></root></mxGraphModel>"
+		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;portConstraint=north east west;\" vertex=\"1\" parent=\"2\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell></root></mxGraphModel>"
 	},
 	{
 		"title": "Female",
 		"w": 80,
 		"h": 80,
-		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;aspect=fixed;\" vertex=\"1\" parent=\"2\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell></root></mxGraphModel>"
+		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;aspect=fixed;portConstraint=north east west;\" vertex=\"1\" parent=\"2\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell></root></mxGraphModel>"
 	},
 	{
 		"title": "Unknown",
 		"w": 80,
 		"h": 80,
-		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;\" vertex=\"1\" parent=\"2\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell></root></mxGraphModel>"
+		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;portConstraint=north east west;\" vertex=\"1\" parent=\"2\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell></root></mxGraphModel>"
 	},
 	{
 		"title": "Male Filled",
 		"w": 80,
 		"h": 80,
-		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"rounded=0;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;strokeWidth=2;\" vertex=\"1\" parent=\"2\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell></root></mxGraphModel>"
+		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"rounded=0;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;strokeWidth=2;portConstraint=north east west;\" vertex=\"1\" parent=\"2\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell></root></mxGraphModel>"
 	},
 	{
 		"title": "Female Filled",
 		"w": 80,
 		"h": 80,
-		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"ellipse;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;strokeWidth=2;aspect=fixed;\" vertex=\"1\" parent=\"2\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell></root></mxGraphModel>"
+		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"ellipse;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;strokeWidth=2;aspect=fixed;portConstraint=north east west;\" vertex=\"1\" parent=\"2\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell></root></mxGraphModel>"
 	},
 	{
 		"title": "Unknown Filled",
 		"w": 80,
 		"h": 80,
-		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"rhombus;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;strokeWidth=2;\" vertex=\"1\" parent=\"2\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell></root></mxGraphModel>"
+		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"rhombus;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;strokeWidth=2;portConstraint=north east west;\" vertex=\"1\" parent=\"2\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell></root></mxGraphModel>"
 	},
 	{
 		"title": "Marriage Line",
 		"w": 120,
 		"h": 50,
-		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"120\" height=\"50\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;\" edge=\"1\" parent=\"2\"><mxGeometry width=\"50\" height=\"50\" relative=\"1\" as=\"geometry\"><mxPoint x=\"0\" y=\"25\" as=\"sourcePoint\"/><mxPoint x=\"120\" y=\"25\" as=\"targetPoint\"/></mxGeometry></mxCell></root></mxGraphModel>"
+		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"120\" height=\"50\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;sourcePortConstraint=eastwest;targetPortConstraint=eastwest;\" edge=\"1\" parent=\"2\"><mxGeometry width=\"50\" height=\"50\" relative=\"1\" as=\"geometry\"><mxPoint x=\"0\" y=\"25\" as=\"sourcePoint\"/><mxPoint x=\"120\" y=\"25\" as=\"targetPoint\"/></mxGeometry></mxCell></root></mxGraphModel>"
 	},
 	{
 		"title": "Consanguinity Double Line",
@@ -52,7 +52,7 @@
 		"title": "Parent-Child Line",
 		"w": 80,
 		"h": 100,
-		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"100\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;\" edge=\"1\" parent=\"2\"><mxGeometry width=\"50\" height=\"50\" relative=\"1\" as=\"geometry\"><mxPoint x=\"40\" y=\"0\" as=\"sourcePoint\"/><mxPoint x=\"40\" y=\"100\" as=\"targetPoint\"/></mxGeometry></mxCell></root></mxGraphModel>"
+		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"100\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;sourcePortConstraint=northsouth;targetPortConstraint=northsouth;\" edge=\"1\" parent=\"2\"><mxGeometry width=\"50\" height=\"50\" relative=\"1\" as=\"geometry\"><mxPoint x=\"40\" y=\"0\" as=\"sourcePoint\"/><mxPoint x=\"40\" y=\"100\" as=\"targetPoint\"/></mxGeometry></mxCell></root></mxGraphModel>"
 	},
 	{
 		"title": "Marriage + Child Connector",
@@ -94,19 +94,19 @@
 		"title": "Sibling Horizontal Extension",
 		"w": 600,
 		"h": 40,
-		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"600\" height=\"40\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;\" edge=\"1\" parent=\"2\"><mxGeometry width=\"50\" height=\"50\" relative=\"1\" as=\"geometry\"><mxPoint x=\"0\" y=\"20\" as=\"sourcePoint\"/><mxPoint x=\"600\" y=\"20\" as=\"targetPoint\"/></mxGeometry></mxCell></root></mxGraphModel>"
+		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"600\" height=\"40\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;sourcePortConstraint=eastwest;targetPortConstraint=eastwest;\" edge=\"1\" parent=\"2\"><mxGeometry width=\"50\" height=\"50\" relative=\"1\" as=\"geometry\"><mxPoint x=\"0\" y=\"20\" as=\"sourcePoint\"/><mxPoint x=\"600\" y=\"20\" as=\"targetPoint\"/></mxGeometry></mxCell></root></mxGraphModel>"
 	},
 	{
 		"title": "Sibling Vertical Extension",
 		"w": 40,
 		"h": 120,
-		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"40\" height=\"120\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;\" edge=\"1\" parent=\"2\"><mxGeometry width=\"50\" height=\"50\" relative=\"1\" as=\"geometry\"><mxPoint x=\"20\" y=\"0\" as=\"sourcePoint\"/><mxPoint x=\"20\" y=\"120\" as=\"targetPoint\"/></mxGeometry></mxCell></root></mxGraphModel>"
+		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"40\" height=\"120\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;sourcePortConstraint=northsouth;targetPortConstraint=northsouth;\" edge=\"1\" parent=\"2\"><mxGeometry width=\"50\" height=\"50\" relative=\"1\" as=\"geometry\"><mxPoint x=\"20\" y=\"0\" as=\"sourcePoint\"/><mxPoint x=\"20\" y=\"120\" as=\"targetPoint\"/></mxGeometry></mxCell></root></mxGraphModel>"
 	},
 	{
 		"title": "Deceased Slash",
 		"w": 80,
 		"h": 80,
-		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;\" edge=\"1\" parent=\"2\"><mxGeometry width=\"50\" height=\"50\" relative=\"1\" as=\"geometry\"><mxPoint x=\"0\" y=\"80\" as=\"sourcePoint\"/><mxPoint x=\"80\" y=\"0\" as=\"targetPoint\"/></mxGeometry></mxCell></root></mxGraphModel>"
+		"xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><mxCell id=\"2\" value=\"\" style=\"group;strokeColor=none;fillColor=none;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"0\" y=\"0\" width=\"80\" height=\"80\" as=\"geometry\"/></mxCell><mxCell id=\"3\" value=\"\" style=\"endArrow=none;html=1;strokeWidth=8;strokeColor=#ffffff;\" edge=\"1\" parent=\"2\"><mxGeometry width=\"50\" height=\"50\" relative=\"1\" as=\"geometry\"><mxPoint x=\"-8\" y=\"88\" as=\"sourcePoint\"/><mxPoint x=\"88\" y=\"-8\" as=\"targetPoint\"/></mxGeometry></mxCell><mxCell id=\"4\" value=\"\" style=\"endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;\" edge=\"1\" parent=\"2\"><mxGeometry width=\"50\" height=\"50\" relative=\"1\" as=\"geometry\"><mxPoint x=\"-8\" y=\"88\" as=\"sourcePoint\"/><mxPoint x=\"88\" y=\"-8\" as=\"targetPoint\"/></mxGeometry></mxCell></root></mxGraphModel>"
 	},
 	{
 		"title": "Slim Arrow 45 Up-Right",

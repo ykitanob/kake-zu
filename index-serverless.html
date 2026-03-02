@@ -210,7 +210,7 @@ FAM001	I002	0	0	2	1	70"></textarea>
         function getDrawioUrl(params = '') {
             const libUrl = getLibraryUrl();
             const clibs = libUrl ? `&clibs=U${encodeURIComponent(libUrl)}` : '';
-            const query = `?embed=1&ui=min&proto=json&spin=1&lang=ja&splash=0&local=1&libraries=1${clibs}${params}`;
+            const query = `?embed=1&ui=min&proto=json&spin=1&configure=1&lang=ja&splash=0&local=1&libraries=1${clibs}${params}`;
             const localBase = getLocalDrawioBaseUrl();
             if (localBase) return `${localBase}${query}`;
             return `https://app.diagrams.net/${query}`;
@@ -514,6 +514,67 @@ FAM001	I002	0	0	2	1	70"></textarea>
 
             entries.forEach(person => getLevel(person.id));
 
+            function normalizeLevels() {
+                let changed = true;
+                let guard = 0;
+
+                while (changed && guard < 1000) {
+                    changed = false;
+                    guard += 1;
+
+                    entries.forEach(person => {
+                        const fatherId = person.fatherId;
+                        const motherId = person.motherId;
+                        if (!fatherId || !motherId || fatherId === '0' || motherId === '0') return;
+                        if (!peopleById[fatherId] || !peopleById[motherId]) return;
+
+                        const fatherLevel = levelMemo[fatherId] || 0;
+                        const motherLevel = levelMemo[motherId] || 0;
+                        const spouseLevel = Math.max(fatherLevel, motherLevel);
+
+                        if (fatherLevel !== spouseLevel) {
+                            levelMemo[fatherId] = spouseLevel;
+                            changed = true;
+                        }
+                        if (motherLevel !== spouseLevel) {
+                            levelMemo[motherId] = spouseLevel;
+                            changed = true;
+                        }
+                    });
+
+                    entries.forEach(person => {
+                        const hasFather = person.fatherId && person.fatherId !== '0' && peopleById[person.fatherId];
+                        const hasMother = person.motherId && person.motherId !== '0' && peopleById[person.motherId];
+                        if (!hasFather && !hasMother) return;
+
+                        const fatherLevel = hasFather ? (levelMemo[person.fatherId] || 0) : 0;
+                        const motherLevel = hasMother ? (levelMemo[person.motherId] || 0) : 0;
+                        const minChildLevel = Math.max(fatherLevel, motherLevel) + 1;
+                        const currentLevel = levelMemo[person.id] || 0;
+
+                        if (currentLevel < minChildLevel) {
+                            levelMemo[person.id] = minChildLevel;
+                            changed = true;
+                        }
+                    });
+                }
+            }
+
+            normalizeLevels();
+
+            const spouseMap = new Map();
+            entries.forEach(person => {
+                const fatherId = person.fatherId;
+                const motherId = person.motherId;
+                if (!fatherId || !motherId || fatherId === '0' || motherId === '0') return;
+                if (!peopleById[fatherId] || !peopleById[motherId]) return;
+
+                if (!spouseMap.has(fatherId)) spouseMap.set(fatherId, new Set());
+                if (!spouseMap.has(motherId)) spouseMap.set(motherId, new Set());
+                spouseMap.get(fatherId).add(motherId);
+                spouseMap.get(motherId).add(fatherId);
+            });
+
             const levels = {};
             entries.forEach(person => {
                 const level = levelMemo[person.id] || 0;
@@ -552,31 +613,116 @@ FAM001	I002	0	0	2	1	70"></textarea>
                     centers = group.map((_, index) => startX + index * colGap + symbolSize / 2);
                 } else {
                     const minGap = 140;
-                    const preferred = group.map(person => {
+                    const preferredById = {};
+
+                    group.forEach(person => {
                         const father = person.fatherId && person.fatherId !== '0' ? geometryById[person.fatherId] : null;
                         const mother = person.motherId && person.motherId !== '0' ? geometryById[person.motherId] : null;
                         let preferredCenter = pageWidth / 2;
                         if (father && mother) preferredCenter = (father.centerX + mother.centerX) / 2;
                         else if (father) preferredCenter = father.centerX;
                         else if (mother) preferredCenter = mother.centerX;
-                        return { person, preferredCenter };
+                        preferredById[person.id] = preferredCenter;
                     });
 
-                    preferred.sort((a, b) => {
+                    const siblingGroups = new Map();
+                    group.forEach(person => {
+                        const pairKey = getParentPairKey(person);
+                        if (!pairKey) return;
+                        if (!siblingGroups.has(pairKey)) siblingGroups.set(pairKey, []);
+                        siblingGroups.get(pairKey).push(person);
+                    });
+
+                    siblingGroups.forEach(siblings => {
+                        if (siblings.length <= 1) return;
+                        siblings.sort(compareSiblingAware);
+
+                        const base = preferredById[siblings[0].id] || pageWidth / 2;
+                        const centerOffset = (siblings.length - 1) / 2;
+                        siblings.forEach((sibling, index) => {
+                            preferredById[sibling.id] = base + (index - centerOffset) * minGap;
+                        });
+                    });
+
+                    group.forEach(person => {
+                        const hasKnownParent = (person.fatherId && person.fatherId !== '0' && peopleById[person.fatherId]) ||
+                                               (person.motherId && person.motherId !== '0' && peopleById[person.motherId]);
+                        if (hasKnownParent) return;
+
+                        const spouseIds = spouseMap.has(person.id) ? Array.from(spouseMap.get(person.id)) : [];
+                        let spouseAnchor = null;
+                        for (const spouseId of spouseIds) {
+                            const spouse = peopleById[spouseId];
+                            if (!spouse) continue;
+                            if ((levelMemo[spouseId] || 0) !== level) continue;
+
+                            const spouseHasKnownParent = (spouse.fatherId && spouse.fatherId !== '0' && peopleById[spouse.fatherId]) ||
+                                                        (spouse.motherId && spouse.motherId !== '0' && peopleById[spouse.motherId]);
+                            if (spouseHasKnownParent) {
+                                spouseAnchor = spouse;
+                                break;
+                            }
+                        }
+
+                        if (spouseAnchor && preferredById[spouseAnchor.id] !== undefined) {
+                            const direction = person.sex === '2' ? 1 : -1;
+                            preferredById[person.id] = preferredById[spouseAnchor.id] + direction * minGap;
+                        }
+                    });
+
+                    const processedIds = new Set();
+                    const blocks = [];
+
+                    siblingGroups.forEach(siblings => {
+                        if (siblings.length <= 1) return;
+                        const members = [...siblings].sort(compareSiblingAware);
+                        members.forEach(member => processedIds.add(member.id));
+                        blocks.push({ members });
+                    });
+
+                    group.forEach(person => {
+                        if (processedIds.has(person.id)) return;
+                        blocks.push({ members: [person] });
+                    });
+
+                    blocks.forEach(block => {
+                        const preferredCenters = block.members.map(member => preferredById[member.id] ?? (pageWidth / 2));
+                        block.preferredCenter = preferredCenters.reduce((sum, value) => sum + value, 0) / preferredCenters.length;
+                        block.width = (block.members.length - 1) * minGap;
+                    });
+
+                    blocks.sort((a, b) => {
                         if (a.preferredCenter !== b.preferredCenter) return a.preferredCenter - b.preferredCenter;
-                        return compareSiblingAware(a.person, b.person);
-                    });
-                    const assigned = [];
-                    let prev = -Infinity;
-                    preferred.forEach(item => {
-                        const value = Math.max(item.preferredCenter, prev + minGap);
-                        assigned.push({ person: item.person, center: value });
-                        prev = value;
+                        return a.members[0].id.localeCompare(b.members[0].id);
                     });
 
-                    const minCenter = Math.min(...assigned.map(a => a.center));
-                    const maxCenter = Math.max(...assigned.map(a => a.center));
-                    const shift = (pageWidth / 2) - ((minCenter + maxCenter) / 2);
+                    const assigned = [];
+                    let prevRight = -Infinity;
+                    blocks.forEach(block => {
+                        const desiredLeft = block.preferredCenter - (block.width / 2);
+                        const left = Math.max(desiredLeft, prevRight + minGap);
+
+                        block.members.forEach((member, index) => {
+                            const value = left + index * minGap;
+                            const hasKnownParent = (member.fatherId && member.fatherId !== '0' && peopleById[member.fatherId]) ||
+                                                   (member.motherId && member.motherId !== '0' && peopleById[member.motherId]);
+                            assigned.push({ person: member, center: value, preferred: preferredById[member.id], hasKnownParent });
+                        });
+
+                        prevRight = left + block.width;
+                    });
+
+                    const anchorAssigned = assigned.filter(item => item.hasKnownParent);
+                    let shift = 0;
+                    if (anchorAssigned.length > 0) {
+                        const anchorCenterAvg = anchorAssigned.reduce((sum, item) => sum + item.center, 0) / anchorAssigned.length;
+                        const anchorPreferredAvg = anchorAssigned.reduce((sum, item) => sum + item.preferred, 0) / anchorAssigned.length;
+                        shift = anchorPreferredAvg - anchorCenterAvg;
+                    } else {
+                        const minCenter = Math.min(...assigned.map(a => a.center));
+                        const maxCenter = Math.max(...assigned.map(a => a.center));
+                        shift = (pageWidth / 2) - ((minCenter + maxCenter) / 2);
+                    }
 
                     const centerById = {};
                     assigned.forEach(item => { centerById[item.person.id] = item.center + shift; });
@@ -609,6 +755,54 @@ FAM001	I002	0	0	2	1	70"></textarea>
             });
 
             const coupleMidMap = new Map();
+            const occupiedMarriageStemSegments = [];
+            const marriageStemMinSeparation = 15;
+            const occupiedMarriageYByLevel = new Map();
+
+            function intervalsOverlap(y1a, y2a, y1b, y2b) {
+                const minA = Math.min(y1a, y2a);
+                const maxA = Math.max(y1a, y2a);
+                const minB = Math.min(y1b, y2b);
+                const maxB = Math.max(y1b, y2b);
+                return Math.max(minA, minB) <= (Math.min(maxA, maxB) + 2);
+            }
+
+            function hasMarriageStemCollision(x, y1, y2) {
+                return occupiedMarriageStemSegments.some(seg => Math.abs(seg.x - x) < marriageStemMinSeparation && intervalsOverlap(seg.y1, seg.y2, y1, y2));
+            }
+
+            function reserveMarriageStem(x, y1, y2) {
+                occupiedMarriageStemSegments.push({ x, y1: Math.min(y1, y2), y2: Math.max(y1, y2) });
+            }
+
+            function pickMarriageStemOffset(fatherX, fatherY1, fatherY2, motherX, motherY1, motherY2) {
+                const candidates = [0, 18, -18, 36, -36, 54, -54];
+                for (const offset of candidates) {
+                    const noFatherCollision = !hasMarriageStemCollision(fatherX + offset, fatherY1, fatherY2);
+                    const noMotherCollision = !hasMarriageStemCollision(motherX + offset, motherY1, motherY2);
+                    if (noFatherCollision && noMotherCollision) return offset;
+                }
+                return 0;
+            }
+
+            function pickMarriageY(level, baseY) {
+                if (!occupiedMarriageYByLevel.has(level)) occupiedMarriageYByLevel.set(level, []);
+                const used = occupiedMarriageYByLevel.get(level);
+                const candidates = [0, 18, -18, 36, -36, 54, -54].map(offset => baseY + offset);
+                const minGap = 12;
+
+                for (const candidate of candidates) {
+                    const conflicts = used.some(y => Math.abs(y - candidate) < minGap);
+                    if (!conflicts) {
+                        used.push(candidate);
+                        return candidate;
+                    }
+                }
+
+                used.push(baseY + 72);
+                return baseY + 72;
+            }
+
             marriageMap.forEach((pair, key) => {
                 const father = geometryById[pair.fatherId];
                 const mother = geometryById[pair.motherId];
@@ -631,13 +825,32 @@ FAM001	I002	0	0	2	1	70"></textarea>
                     const fatherBottomY = father.topY + symbolSize;
                     const motherBottomY = mother.topY + symbolSize;
                     const baseBottomY = Math.max(fatherBottomY, motherBottomY);
-                    const yMarriage = baseBottomY + 56;
+                    const yMarriage = pickMarriageY(level, baseBottomY + 56);
 
-                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${fatherBottomY}" as="sourcePoint"/><mxPoint x="${father.centerX}" y="${yMarriage}" as="targetPoint"/></mxGeometry></mxCell>`);
-                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${mother.centerX}" y="${motherBottomY}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yMarriage}" as="targetPoint"/></mxGeometry></mxCell>`);
-                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${yMarriage}" as="sourcePoint"/><mxPoint x="${mother.centerX}" y="${yMarriage}" as="targetPoint"/></mxGeometry></mxCell>`);
+                    const stemOffset = pickMarriageStemOffset(
+                        father.centerX,
+                        fatherBottomY,
+                        yMarriage,
+                        mother.centerX,
+                        motherBottomY,
+                        yMarriage
+                    );
+                    const fatherStemX = father.centerX + stemOffset;
+                    const motherStemX = mother.centerX + stemOffset;
 
-                    coupleMidMap.set(key, { midX: (father.centerX + mother.centerX) / 2, y: yMarriage });
+                    if (stemOffset !== 0) {
+                        edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${father.centerX}" y="${fatherBottomY}" as="sourcePoint"/><mxPoint x="${fatherStemX}" y="${fatherBottomY}" as="targetPoint"/></mxGeometry></mxCell>`);
+                        edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${mother.centerX}" y="${motherBottomY}" as="sourcePoint"/><mxPoint x="${motherStemX}" y="${motherBottomY}" as="targetPoint"/></mxGeometry></mxCell>`);
+                    }
+
+                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${fatherStemX}" y="${fatherBottomY}" as="sourcePoint"/><mxPoint x="${fatherStemX}" y="${yMarriage}" as="targetPoint"/></mxGeometry></mxCell>`);
+                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${motherStemX}" y="${motherBottomY}" as="sourcePoint"/><mxPoint x="${motherStemX}" y="${yMarriage}" as="targetPoint"/></mxGeometry></mxCell>`);
+                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${fatherStemX}" y="${yMarriage}" as="sourcePoint"/><mxPoint x="${motherStemX}" y="${yMarriage}" as="targetPoint"/></mxGeometry></mxCell>`);
+
+                    reserveMarriageStem(fatherStemX, fatherBottomY, yMarriage);
+                    reserveMarriageStem(motherStemX, motherBottomY, yMarriage);
+
+                    coupleMidMap.set(key, { midX: (fatherStemX + motherStemX) / 2, y: yMarriage });
                 }
             });
 
@@ -646,23 +859,54 @@ FAM001	I002	0	0	2	1	70"></textarea>
                 if (person.fatherId !== '0' && person.motherId !== '0' && geometryById[person.id]) {
                     const key = [person.fatherId, person.motherId].sort().join('|');
                     if (!childrenByCouple.has(key)) childrenByCouple.set(key, []);
-                    childrenByCouple.get(key).push(geometryById[person.id]);
+                    childrenByCouple.get(key).push({ id: person.id, ...geometryById[person.id] });
                 }
             });
+
+            const occupiedSiblingYByLevel = new Map();
+
+            function pickSiblingY(level, baseY, maxY) {
+                if (!occupiedSiblingYByLevel.has(level)) occupiedSiblingYByLevel.set(level, []);
+                const used = occupiedSiblingYByLevel.get(level);
+                const candidates = [0, 14, -14, 28, -28, 42, -42].map(offset => Math.min(maxY, baseY + offset));
+                const minGap = 10;
+
+                for (const candidate of candidates) {
+                    const conflicts = used.some(y => Math.abs(y - candidate) < minGap);
+                    if (!conflicts) {
+                        used.push(candidate);
+                        return candidate;
+                    }
+                }
+
+                const fallback = Math.min(maxY, baseY + 56);
+                used.push(fallback);
+                return fallback;
+            }
 
             childrenByCouple.forEach((children, key) => {
                 const coupleMid = coupleMidMap.get(key);
                 if (!coupleMid || children.length === 0) return;
 
                 children.sort((a, b) => a.centerX - b.centerX);
+
+                if (children.length === 1) {
+                    const onlyChild = children[0];
+                    edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${coupleMid.midX}" y="${coupleMid.y}" as="sourcePoint"/><mxPoint x="${onlyChild.centerX}" y="${onlyChild.topY}" as="targetPoint"/></mxGeometry></mxCell>`);
+                    return;
+                }
+
                 const minChildX = children[0].centerX;
                 const maxChildX = children[children.length - 1].centerX;
                 const minChildTopY = Math.min(...children.map(child => child.topY));
-                const siblingY = minChildTopY - 44;
+                const childLevel = Math.min(...children.map(child => levelMemo[child.id] || 0));
+                const siblingY = pickSiblingY(childLevel, minChildTopY - 30, minChildTopY - 12);
+                const siblingLineStartX = Math.min(minChildX, coupleMid.midX);
+                const siblingLineEndX = Math.max(maxChildX, coupleMid.midX);
 
                 edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${coupleMid.midX}" y="${coupleMid.y}" as="sourcePoint"/><mxPoint x="${coupleMid.midX}" y="${siblingY}" as="targetPoint"/></mxGeometry></mxCell>`);
 
-                edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${minChildX}" y="${siblingY}" as="sourcePoint"/><mxPoint x="${maxChildX}" y="${siblingY}" as="targetPoint"/></mxGeometry></mxCell>`);
+                edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${siblingLineStartX}" y="${siblingY}" as="sourcePoint"/><mxPoint x="${siblingLineEndX}" y="${siblingY}" as="targetPoint"/></mxGeometry></mxCell>`);
 
                 children.forEach(child => {
                     edgeCells.push(`<mxCell id="${nextCellId++}" value="" style="endArrow=none;html=1;strokeWidth=3;strokeColor=#000000;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="${child.centerX}" y="${siblingY}" as="sourcePoint"/><mxPoint x="${child.centerX}" y="${child.topY}" as="targetPoint"/></mxGeometry></mxCell>`);
@@ -726,6 +970,31 @@ FAM001	I002	0	0	2	1	70"></textarea>
                 msg = event.data;
             }
             if (!msg || !msg.event) return;
+
+            if (msg.event === 'configure') {
+                const configPayload = {
+                    action: 'configure',
+                    config: {
+                        defaultEdgeStyle: {
+                            edgeStyle: 'none',
+                            curved: '0',
+                            rounded: '0',
+                            strokeWidth: '3',
+                            startArrow: 'none',
+                            endArrow: 'none'
+                        }
+                    }
+                };
+
+                try {
+                    if (event.source && typeof event.source.postMessage === 'function') {
+                        event.source.postMessage(JSON.stringify(configPayload), '*');
+                    }
+                } catch {
+                }
+
+                return;
+            }
 
             if (msg.event === 'save' && pendingXmlDownload) {
                 const xml = msg.xml || '';
