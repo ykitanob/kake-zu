@@ -665,7 +665,20 @@ FAM001	I002	0	0	2	1	70"></textarea>
                         }
 
                         if (spouseAnchor && preferredById[spouseAnchor.id] !== undefined) {
-                            const direction = person.sex === '2' ? 1 : -1;
+                            const anchorCenter = preferredById[spouseAnchor.id];
+                            const otherSpouseCenters = (spouseMap.has(spouseAnchor.id) ? Array.from(spouseMap.get(spouseAnchor.id)) : [])
+                                .filter(id => id !== person.id)
+                                .map(id => preferredById[id])
+                                .filter(value => value !== undefined && value !== null);
+
+                            const hasOtherOnLeft = otherSpouseCenters.some(value => value < anchorCenter);
+                            const hasOtherOnRight = otherSpouseCenters.some(value => value > anchorCenter);
+
+                            let direction;
+                            if (hasOtherOnLeft && !hasOtherOnRight) direction = 1;
+                            else if (!hasOtherOnLeft && hasOtherOnRight) direction = -1;
+                            else direction = person.sex === '2' ? 1 : -1;
+
                             preferredById[person.id] = preferredById[spouseAnchor.id] + direction * minGap;
                         }
                     });
