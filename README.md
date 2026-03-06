@@ -4,6 +4,9 @@ English follows
 
 このツールは draw.io（diagrams.net）を利用して家系図を作成しています。
 
+📌 デモ・公開版: https://ykitanob.github.io/kake-zu/
+
+
 ## 利用している draw.io の参照元
 
 - 公式サイト: https://www.diagrams.net/
