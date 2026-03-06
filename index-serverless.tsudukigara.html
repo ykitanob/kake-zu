@@ -741,11 +741,67 @@ PED00000A\tXX00006\tおば（母方）\t女性\t未発症\t1995/12`;
             const phenotype = mapAffectedFromTsv(affectedStr);
             const age = getAgeFromTsv(birthdateStr);
 
+            // 続柄に基づいて父母IDを決定
+            let fatherId = '0';
+            let motherId = '0';
+            const relType = relationType(relation);
+
+            // 既存のエントリから発端者、父、母を探す
+            const proband = pedEntries.find(e => e.id && !e.id.startsWith('DUMMY_') && e.fatherId !== '0' && e.motherId !== '0');
+            const father = proband ? pedEntries.find(e => e.id === proband.fatherId) : null;
+            const mother = proband ? pedEntries.find(e => e.id === proband.motherId) : null;
+
+            // おじ・おばの場合は祖父母を父母として設定
+            if (relType === 'AUNTUNCLE_PAT' && father) {
+                // 父方の祖父母を確認/作成
+                if (father.fatherId === '0' || father.motherId === '0') {
+                    // ダミー祖父母を作成
+                    let patGfId = father.fatherId !== '0' ? father.fatherId : null;
+                    let patGmId = father.motherId !== '0' ? father.motherId : null;
+                    
+                    if (!patGfId) {
+                        patGfId = 'DUMMY_PAT_GF_' + Date.now();
+                        pedEntries.push({ fid: familyId, id: patGfId, fatherId: '0', motherId: '0', sex: '1', phenotype: '0', age: '' });
+                        father.fatherId = patGfId;
+                    }
+                    if (!patGmId) {
+                        patGmId = 'DUMMY_PAT_GM_' + Date.now();
+                        pedEntries.push({ fid: familyId, id: patGmId, fatherId: '0', motherId: '0', sex: '2', phenotype: '0', age: '' });
+                        father.motherId = patGmId;
+                    }
+                }
+                fatherId = father.fatherId;
+                motherId = father.motherId;
+            } else if (relType === 'AUNTUNCLE_MAT' && mother) {
+                // 母方の祖父母を確認/作成
+                if (mother.fatherId === '0' || mother.motherId === '0') {
+                    let matGfId = mother.fatherId !== '0' ? mother.fatherId : null;
+                    let matGmId = mother.motherId !== '0' ? mother.motherId : null;
+                    
+                    if (!matGfId) {
+                        matGfId = 'DUMMY_MAT_GF_' + Date.now();
+                        pedEntries.push({ fid: familyId, id: matGfId, fatherId: '0', motherId: '0', sex: '1', phenotype: '0', age: '' });
+                        mother.fatherId = matGfId;
+                    }
+                    if (!matGmId) {
+                        matGmId = 'DUMMY_MAT_GM_' + Date.now();
+                        pedEntries.push({ fid: familyId, id: matGmId, fatherId: '0', motherId: '0', sex: '2', phenotype: '0', age: '' });
+                        mother.motherId = matGmId;
+                    }
+                }
+                fatherId = mother.fatherId;
+                motherId = mother.motherId;
+            } else if (relType === 'SIBLING' && proband) {
+                // 同胞は発端者と同じ父母
+                fatherId = proband.fatherId;
+                motherId = proband.motherId;
+            }
+
             const entry = {
                 fid: familyId,
                 id: sampleId,
-                fatherId: '0',
-                motherId: '0',
+                fatherId: fatherId,
+                motherId: motherId,
                 sex: sex,
                 phenotype: phenotype,
                 age: age

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家系図作成ツール - Pedigree Creation Tool</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #228B22 0%, #2E8B57 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h1 { color: #333; font-size: 28px; margin-bottom: 8px; }
+        .subtitle { color: #666; font-size: 14px; }
+
+        .container {
+            flex: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .demo-link {
+            display: inline-block;
+            padding: 16px 32px;
+            background: #228B22;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .demo-link:hover {
+            background: #1e7b1e;
+        }
+
+        .demo-section {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        h2 { color: #333; font-size: 20px; margin-bottom: 16px; border-bottom: 2px solid #228B22; padding-bottom: 8px; }
+        h3 { color: #444; font-size: 16px; margin: 16px 0 8px 0; }
+        p { color: #555; line-height: 1.7; margin-bottom: 12px; }
+        ul { margin-left: 24px; color: #555; line-height: 1.8; }
+        a { color: #228B22; }
+        code { background: #e8f5e9; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+
+        .bilingual {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        @media (max-width: 768px) {
+            .bilingual {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .lang-section {
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        footer {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 14px 20px;
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .notice {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-top: 16px;
+            font-size: 13px;
+            color: #664d03;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🌳 家系図作成ツール / Pedigree Creation Tool</h1>
+        <p class="subtitle">Serverless / GitHub Pages - Powered by draw.io</p>
+    </header>
+
+    <div class="container">
+        <div class="panel">
+            <div class="demo-section">
+                <h2>🚀 ツールを使う / Use the Tool</h2>
+                <p>PEDファイル形式で家系図を作成できます。データはブラウザ内のみで処理され、サーバーには送信されません。</p>
+                <p style="margin-bottom:20px;">Create pedigree diagrams from PED format. All data is processed locally in your browser.</p>
+                <a href="index-serverless.html" class="demo-link">家系図作成ツールを開く / Open Tool</a>
+            </div>
+            <div class="notice">
+                ※ データはWebサーバーに保存されません。作成した家系図はPNGまたはSVGで保存してください。<br>
+                ※ Data is NOT saved on the server. Please save your pedigree as PNG or SVG.
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2> 🪄使い方 / How to Use</h2>
+            
+            <h3>① PEDファイルを準備してください</h3>
+            <p>カラム順: <strong>1.家系ID 2.SampleID 3.父SampleID 4.母SampleID 5.性別 6.表現型 7.年齢</strong></p>
+            <ul>
+                <li>1.家系ID</li>
+                <li>2.SampleID</li>
+                <li>3.父SampleID : 不明の場合は <code>0</code> をご指定ください</li>
+                <li>4.母SampleID : 不明の場合は <code>0</code> をご指定ください</li>
+                <li>5.性別 : 男性＝1、女性＝2 と記載してください。空白の場合は、性別不明=ダイヤで表示します</li>
+                <li>6.表現型 : 未発症＝1、発症＝2 と記載してください。空白の場合は未発症扱いになります</li>
+                <li>7.年齢 : 空白としても問題ありません。兄弟は年齢順にソートします</li>
+            </ul>
+            <p style="margin-top:12px;"><strong>（例）</strong></p>
+            <pre style="background:#f5f5f5;padding:12px;border-radius:6px;overflow-x:auto;font-size:13px;line-height:1.5;">FID	ID	父ID	母ID	性別	表現型	年齢
+FAM002	I001	0	0	1	1	42
+FAM002	I002	0	0	2	1	40
+FAM002	I003	I001	I002	1	1	14
+FAM002	I004	I001	I002	2	2	10</pre>
+
+            <h3 style="margin-top:20px;">② PEDファイル貼り付け枠にコピー＆ペーストしてください</h3>
+            <p>8カラム目以降は無視されます。</p>
+
+            <h3 style="margin-top:20px;">③「貼り付け内容で置き換える」ボタンを押します</h3>
+            <p>その下にテーブルが出現します。テーブルに表示されている内容が図になるので確認してください。</p>
+
+            <h3 style="margin-top:20px;">④「PEDから家系図生成して開く」ボタンを押します</h3>
+            <p>draw.io の描画画面が開きます。</p>
+
+            <h3 style="margin-top:20px;">⑤ draw.io で記号の追加や形の調整を行います</h3>
+            <p>〇や□や線の記号は図形ライブラリに追加しています。</p>
+
+            <h3 style="margin-top:20px;">⑥「PNGで保存する」または「SVGとして保存する」ボタンを押します</h3>
+            <p>画像ファイルがダウンロードされますので、保存してください。</p>
+
+            <h3 style="margin-top:20px;">⑦ パワーポイントで追加編集する場合</h3>
+            <p>SVGで保存して、パワーポイントファイルにSVG画像を挿入します。</p>
+            <ul>
+                <li>パワーポイント上で画像を右クリックして「図形に変換」ボタンを押すと、パワーポイントの図形オブジェクトとして編集できます。</li>
+                <li>「グループ解除」をするとオブジェクトが一つずつに分かれます。</li>
+            </ul>
+        </div>
+
+        <div class="panel">
+            <h2>📖 README</h2>
+            <div class="bilingual">
+                <div class="lang-section">
+                    <h3>🇯🇵 日本語</h3>
+                    <p>このツールは <a href="https://www.diagrams.net/" target="_blank">draw.io（diagrams.net）</a>を利用して家系図を作成しています。</p>
+                    
+                    <h3>利用している draw.io の参照元</h3>
+                    <ul>
+                        <li>公式サイト: <a href="https://www.diagrams.net/" target="_blank">diagrams.net</a></li>
+                        <li>公式アプリ: <a href="https://app.diagrams.net/" target="_blank">app.diagrams.net</a></li>
+                        <li>GitHub: <a href="https://github.com/jgraph/drawio" target="_blank">jgraph/drawio</a></li>
+                    </ul>
+
+                    <h3>謝辞</h3>
+                    <p>素晴らしいツールを公開・開発してくださっている draw.io / diagrams.net 開発チームの皆さまに感謝します。</p>
+                </div>
+
+                <div class="lang-section">
+                    <h3>🇺🇸 English</h3>
+                    <p>This tool uses <a href="https://www.diagrams.net/" target="_blank">draw.io (diagrams.net)</a> to create pedigree diagrams.</p>
+                    
+                    <h3>draw.io References</h3>
+                    <ul>
+                        <li>Official site: <a href="https://www.diagrams.net/" target="_blank">diagrams.net</a></li>
+                        <li>Web app: <a href="https://app.diagrams.net/" target="_blank">app.diagrams.net</a></li>
+                        <li>GitHub: <a href="https://github.com/jgraph/drawio" target="_blank">jgraph/drawio</a></li>
+                    </ul>
+
+                    <h3>Acknowledgements</h3>
+                    <p>Many thanks to the draw.io / diagrams.net development team for creating and maintaining such a great tool.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>📜 ライセンス / License</h2>
+            <ul>
+                <li>Apache License 2.0: <a href="LICENSE-APACHE-2.0.txt">LICENSE-APACHE-2.0.txt</a></li>
+                <li>Third-party notices: <a href="THIRD-PARTY-NOTICES.md">THIRD-PARTY-NOTICES.md</a></li>
+                <li>draw.io change log: <a href="CHANGES-drawio.md">CHANGES-drawio.md</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <footer>
+        <p>Powered by <a href="https://www.diagrams.net/" target="_blank">diagrams.net</a></p>
+    </footer>
+</body>
+</html>
