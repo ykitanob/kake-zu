@@ -207,6 +207,7 @@ PED00000A	XX00005	おば（父方）	女性	未発症	1977/10
 
             <div class="ped-actions">
                 <button class="btn-primary" onclick="addSingleRelationEntry()">一人追加</button>
+                <button class="btn-info" onclick="reloadAllRelationData()">全データ再読み込み（親子補完）</button>
             </div>
             <div style="margin:8px 0 4px 0;font-size:14px;color:#333;font-weight:700;">【PEDファイル（タブ区切り）をお持ちの場合は下の枠内に貼り付けてください】</div>
             <div style="margin:6px 0 8px 0;font-size:12px;color:#555;line-height:1.5;">
@@ -235,7 +236,7 @@ FAM001	I002	0	0	2	1	70"></textarea>
             <div class="ped-table-header">📋 以下のテーブルの内容で家系図を作成します。確認してください</div>
             <div class="ped-table">
                 <table>
-                    <thead><tr><th>FID</th><th>ID</th><th>父ID</th><th>母ID</th><th>性別</th><th>表現型</th><th>年齢</th><th>削除</th></tr></thead>
+                    <thead><tr><th>続柄</th><th>FID</th><th>ID</th><th>父ID</th><th>母ID</th><th>性別</th><th>表現型</th><th>年齢</th><th>削除</th></tr></thead>
                     <tbody id="ped-tbody"></tbody>
                 </table>
             </div>
@@ -263,10 +264,24 @@ FAM001	I002	0	0	2	1	70"></textarea>
 
     <script>
         const pedEntries = [];
+        let savedRelationTsvRows = []; // 続柄TSVの行データを保存
         let pendingXmlDownload = false;
         let currentXmlSpinKey = null;
         let pendingPngDownload = false;
         let currentPngSpinKey = null;
+
+        // ダミーIDを生成（重複時は番号を付ける）
+        function getUniqueDummyId(baseId) {
+            if (!pedEntries.some(e => e.id === baseId)) {
+                return baseId;
+            }
+            let counter = 2;
+            while (pedEntries.some(e => e.id === `${baseId}_${counter}`)) {
+                counter++;
+            }
+            return `${baseId}_${counter}`;
+        }
+
         function getLibraryUrl() {
             if (window.location.protocol.startsWith('http')) {
                     return `${getSiteBaseUrl()}/family-shapes-library.xml`;
@@ -477,6 +492,7 @@ FAM001	I002	0	0	2	1	70"></textarea>
             const grandparentsMat = [];
             const siblings = [];
             const grandchildren = [];
+            const children = [];
             let spouse = null;
 
             function createDummy(base, sex, familyId) {
@@ -493,7 +509,8 @@ FAM001	I002	0	0	2	1	70"></textarea>
                     mother_id: '0',
                     sex,
                     phenotype: '0',
-                    age: ''
+                    age: '',
+                    relation: '(ダミー)'
                 };
                 people.set(id, person);
                 return person;
@@ -557,7 +574,8 @@ FAM001	I002	0	0	2	1	70"></textarea>
                     mother_id: '0',
                     sex: mapSexFromTsv(cols[idxSex]),
                     phenotype: mapAffectedFromTsv(cols[idxAffected]),
-                    age: getAgeFromTsv(cols[idxAge])
+                    age: getAgeFromTsv(cols[idxAge]),
+                    relation: relation
                 };
                 people.set(sampleId, person);
 
@@ -572,6 +590,7 @@ FAM001	I002	0	0	2	1	70"></textarea>
                 else if (relType === 'GP_MAT') grandparentsMat.push(person);
                 else if (relType === 'SIBLING') siblings.push(person);
                 else if (relType === 'GRANDCHILD') grandchildren.push(person);
+                else if (relType === 'CHILD') children.push(person);
                 else if (relType === 'SPOUSE') spouse = person;
             }
 
@@ -660,6 +679,27 @@ FAM001	I002	0	0	2	1	70"></textarea>
                         grandchild.mother_id = dummyChildSpouse.sample_id;
                     }
                 }
+
+                // 子どもの処理: 発端者+配偶者の子として設定
+                if (children.length > 0) {
+                    // 発端者の配偶者を確保
+                    if (!spouse) {
+                        spouse = createDummy('SPOUSE', '0', proband.family_id);
+                    }
+                    // 子どもの父母を設定
+                    for (const child of children) {
+                        if (proband.sex === '1') {
+                            child.father_id = proband.sample_id;
+                            child.mother_id = spouse.sample_id;
+                        } else if (proband.sex === '2') {
+                            child.father_id = spouse.sample_id;
+                            child.mother_id = proband.sample_id;
+                        } else {
+                            child.father_id = proband.sample_id;
+                            child.mother_id = spouse.sample_id;
+                        }
+                    }
+                }
             }
 
             return Array.from(people.values()).map(person => ({
@@ -669,7 +709,8 @@ FAM001	I002	0	0	2	1	70"></textarea>
                 motherId: person.mother_id,
                 sex: person.sex,
                 phenotype: person.phenotype,
-                age: person.age || ''
+                age: person.age || '',
+                relation: person.relation || ''
             }));
         }
 
@@ -703,6 +744,9 @@ PED00000A\tXX00006\tおば（母方）\t女性\t未発症\t1995/12`;
                     }
                     existingIds.add(row.id);
                 }
+
+                // 続柄TSVの行データを保存（ヘッダー含む）
+                savedRelationTsvRows = text.split(/\r?\n/).filter(line => line.trim());
 
                 pedEntries.length = 0;
                 pedEntries.push(...converted);
@@ -760,13 +804,13 @@ PED00000A\tXX00006\tおば（母方）\t女性\t未発症\t1995/12`;
                     let patGmId = father.motherId !== '0' ? father.motherId : null;
                     
                     if (!patGfId) {
-                        patGfId = 'DUMMY_PAT_GF_' + Date.now();
-                        pedEntries.push({ fid: familyId, id: patGfId, fatherId: '0', motherId: '0', sex: '1', phenotype: '0', age: '' });
+                        patGfId = getUniqueDummyId('DUMMY_PAT_GF');
+                        pedEntries.push({ fid: familyId, id: patGfId, fatherId: '0', motherId: '0', sex: '1', phenotype: '0', age: '', relation: '(ダミー)' });
                         father.fatherId = patGfId;
                     }
                     if (!patGmId) {
-                        patGmId = 'DUMMY_PAT_GM_' + Date.now();
-                        pedEntries.push({ fid: familyId, id: patGmId, fatherId: '0', motherId: '0', sex: '2', phenotype: '0', age: '' });
+                        patGmId = getUniqueDummyId('DUMMY_PAT_GM');
+                        pedEntries.push({ fid: familyId, id: patGmId, fatherId: '0', motherId: '0', sex: '2', phenotype: '0', age: '', relation: '(ダミー)' });
                         father.motherId = patGmId;
                     }
                 }
@@ -779,13 +823,13 @@ PED00000A\tXX00006\tおば（母方）\t女性\t未発症\t1995/12`;
                     let matGmId = mother.motherId !== '0' ? mother.motherId : null;
                     
                     if (!matGfId) {
-                        matGfId = 'DUMMY_MAT_GF_' + Date.now();
-                        pedEntries.push({ fid: familyId, id: matGfId, fatherId: '0', motherId: '0', sex: '1', phenotype: '0', age: '' });
+                        matGfId = getUniqueDummyId('DUMMY_MAT_GF');
+                        pedEntries.push({ fid: familyId, id: matGfId, fatherId: '0', motherId: '0', sex: '1', phenotype: '0', age: '', relation: '(ダミー)' });
                         mother.fatherId = matGfId;
                     }
                     if (!matGmId) {
-                        matGmId = 'DUMMY_MAT_GM_' + Date.now();
-                        pedEntries.push({ fid: familyId, id: matGmId, fatherId: '0', motherId: '0', sex: '2', phenotype: '0', age: '' });
+                        matGmId = getUniqueDummyId('DUMMY_MAT_GM');
+                        pedEntries.push({ fid: familyId, id: matGmId, fatherId: '0', motherId: '0', sex: '2', phenotype: '0', age: '', relation: '(ダミー)' });
                         mother.motherId = matGmId;
                     }
                 }
@@ -795,6 +839,31 @@ PED00000A\tXX00006\tおば（母方）\t女性\t未発症\t1995/12`;
                 // 同胞は発端者と同じ父母
                 fatherId = proband.fatherId;
                 motherId = proband.motherId;
+            } else if (relType === 'CHILD' && proband) {
+                // 子どもは発端者+配偶者の子
+                let spouse = pedEntries.find(e => e.id && !e.id.startsWith('DUMMY_') && 
+                    ((proband.sex === '1' && e.sex === '2') || (proband.sex === '2' && e.sex === '1')) &&
+                    e.fatherId === '0' && e.motherId === '0' && e.id !== proband.fatherId && e.id !== proband.motherId);
+                
+                if (!spouse) {
+                    // ダミー配偶者を作成
+                    const spouseId = getUniqueDummyId('DUMMY_SPOUSE');
+                    const spouseSex = proband.sex === '1' ? '2' : (proband.sex === '2' ? '1' : '0');
+                    spouse = { fid: familyId, id: spouseId, fatherId: '0', motherId: '0', sex: spouseSex, phenotype: '0', age: '', relation: '(ダミー)' };
+                    pedEntries.push(spouse);
+                }
+                
+                // 発端者の性別に応じて父母を設定
+                if (proband.sex === '1') {
+                    fatherId = proband.id;
+                    motherId = spouse.id;
+                } else if (proband.sex === '2') {
+                    fatherId = spouse.id;
+                    motherId = proband.id;
+                } else {
+                    fatherId = proband.id;
+                    motherId = spouse.id;
+                }
             }
 
             const entry = {
@@ -804,10 +873,24 @@ PED00000A\tXX00006\tおば（母方）\t女性\t未発症\t1995/12`;
                 motherId: motherId,
                 sex: sex,
                 phenotype: phenotype,
-                age: age
+                age: age,
+                relation: relation
             };
 
             pedEntries.push(entry);
+
+            // 続柄TSVの行データにも追加（後で再読み込みできるように）
+            if (savedRelationTsvRows.length === 0) {
+                // ヘッダーがない場合は追加
+                savedRelationTsvRows.push('家系ID\t統合ID\t続柄\t性別\t発症\t生年月');
+            }
+            const sexLabel = sexStr || '不明';
+            const affectedLabel = affectedStr || '不明';
+            const newRow = `${familyId}\t${sampleId}\t${relation}\t${sexLabel}\t${affectedLabel}\t${birthdateStr}`;
+            savedRelationTsvRows.push(newRow);
+            console.log('一人追加 - 追加した行:', newRow);
+            console.log('一人追加後のsavedRelationTsvRows:', savedRelationTsvRows.slice());
+
             renderPedEntries();
 
             // 入力欄をクリア
@@ -822,7 +905,37 @@ PED00000A\tXX00006\tおば（母方）\t女性\t未発症\t1995/12`;
 
         function clearPedEntries() {
             pedEntries.length = 0;
+            savedRelationTsvRows = []; // 続柄TSVデータもクリア
             renderPedEntries();
+        }
+
+        function reloadAllRelationData() {
+            if (savedRelationTsvRows.length < 2) {
+                alert('続柄TSVデータがありません。先に「続柄TSVを反映」または「一人追加」でデータを追加してください。');
+                return;
+            }
+
+            console.log('savedRelationTsvRows:', savedRelationTsvRows);
+
+            try {
+                const tsvText = savedRelationTsvRows.join('\n');
+                console.log('再読み込みTSV:', tsvText);
+                const converted = convertRelationTsvToPedRecords(tsvText);
+                const existingIds = new Set();
+                for (const row of converted) {
+                    if (existingIds.has(row.id)) {
+                        throw new Error(`重複IDエラー: ${row.id} が変換結果内で重複しています`);
+                    }
+                    existingIds.add(row.id);
+                }
+
+                pedEntries.length = 0;
+                pedEntries.push(...converted);
+                renderPedEntries();
+                alert('データを再読み込みし、親子関係を補完しました。');
+            } catch (error) {
+                alert(`再読み込みエラー: ${error.message}`);
+            }
         }
 
         function importPedText(replaceExisting) {
@@ -853,7 +966,8 @@ PED00000A\tXX00006\tおば（母方）\t女性\t未発症\t1995/12`;
                     motherId: columns[3] || '0',
                     sex: columns[4] || '0',
                     phenotype: columns[5] || '1',
-                    age: columns[6] || ''
+                    age: columns[6] || '',
+                    relation: ''
                 };
 
                 if (!record.id) {
@@ -960,8 +1074,12 @@ PED00000A\tXX00006\tおば（母方）\t女性\t未発症\t1995/12`;
 
         function renderPedEntries() {
             const tbody = document.getElementById('ped-tbody');
-            tbody.innerHTML = pedEntries.map((row, index) => `
-                <tr>
+            tbody.innerHTML = pedEntries.map((row, index) => {
+                const isProband = row.relation && (row.relation.includes('発端者') || row.relation.includes('本人'));
+                const rowStyle = isProband ? 'background-color: #ffe4e1;' : '';
+                return `
+                <tr style="${rowStyle}">
+                    <td style="font-weight:600;${isProband ? 'color:#c71585;' : ''}">${row.relation || ''}</td>
                     <td><input type="text" value="${row.fid}" onchange="updatePedEntry(${index}, 'fid', this.value)" style="width:100%;border:none;background:transparent;text-align:center;font-size:14px;"></td>
                     <td><input type="text" value="${row.id}" onchange="updatePedEntry(${index}, 'id', this.value)" style="width:100%;border:none;background:transparent;text-align:center;font-size:14px;"></td>
                     <td><input type="text" value="${row.fatherId}" onchange="updatePedEntry(${index}, 'fatherId', this.value)" style="width:100%;border:none;background:transparent;text-align:center;font-size:14px;"></td>
@@ -979,7 +1097,7 @@ PED00000A\tXX00006\tおば（母方）\t女性\t未発症\t1995/12`;
                     <td><input type="text" value="${row.age || ''}" onchange="updatePedEntry(${index}, 'age', this.value)" style="width:60px;border:none;background:transparent;text-align:center;font-size:14px;"></td>
                     <td><button onclick="removePedEntry(${index})" style="padding:4px 8px;">削除</button></td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
 
         function updatePedEntry(index, field, value) {
