@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+        <!-- Driver.js CDN -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@0.9.8/dist/driver.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/driver.js@0.9.8/dist/driver.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>家系図作成 - Draw.io（サーバーレス版）</title>
@@ -58,6 +61,19 @@
         .btn-secondary { background: #48bb78; }
         .btn-info { background: #4299e1; }
         .btn-danger { background: #FA8072; }
+        .btn-guide { background: #d4f98a; color: #333; position: relative; z-index: 1; }
+        .btn-guide.glow {
+            animation: guide-glow 1.2s infinite alternate;
+            box-shadow: 0 0 7px 2px #eaffb7, 0 0 13px 4px #b6ffb7;
+        }
+        @keyframes guide-glow {
+            0% {
+                box-shadow: 0 0 3px 0.5px #eaffb7, 0 0 6px 1px #b6ffb7;
+            }
+            100% {
+                box-shadow: 0 0 9px 3px #eaffb7, 0 0 18px 6px #b6ffb7;
+            }
+        }
 
         .ped-grid {
             display: grid;
@@ -132,13 +148,18 @@
         <h1>🌳 家系図作成ツール（クライアント完結 / 静的配信）</h1>
         <p class="subtitle">GitHub Pages上で、同一ページ内に draw.io を読み込んで動作します</p>
     </header>
+            <div class="button-group left">
+                    <button class="btn-guide glow" style="background:#d4f98a;color:#333;border:2px solid #b6e36a;" onclick="startDriverGuide()">🧚使い方を表示する
+                        
+                    </button>
+            </div>
 
     <div class="container">
         <div class="panel">
             <h3>📋 PED入力（Draw.io起動前）</h3>
             
             <div class="ped-actions">
-                 <button class="btn-secondary" onclick="loadSamplePedigree()">3世代7人サンプル</button>
+                 <button class="btn-secondary" id="btn-sample-3gen7" onclick="loadSamplePedigree()">3世代7人サンプル</button>
                  <button class="btn-secondary" onclick="loadSample2Gen4()">2世代4人サンプル</button>
                  <button class="btn-secondary" onclick="loadSample3Gen10()">3世代10人サンプル</button>
                  <button class="btn-secondary" onclick="loadSample4Gen20()">4世代20人サンプル</button>
@@ -159,8 +180,16 @@
             <textarea id="ped-text-input" rows="5" placeholder="FAM001	I001	0	0	1	1	72
 FAM001	I002	0	0	2	1	70"></textarea>
             <div class="ped-actions">
-                 <button class="btn-primary" onclick="loadPedTextToTable()">テーブルに読み込む</button>
+                 <button class="btn-primary" id="btn-load-ped-table" onclick="loadPedTextToTable()">テーブルに読み込む</button>
                  <button class="btn-info" onclick="importPedText(false)">テーブルに追加する</button>
+
+            </div>
+                 <div class="ped-actions">
+                <div style="display:flex; justify-content:flex-end; width:100%;">
+                                     <button class="btn-info" onclick="clearPedEntries()">すべて削除</button>
+                </div>
+
+
             </div>
 
             <div class="ped-table-header">📋 以下のテーブルの内容で家系図を作成します。確認してください</div>
@@ -192,7 +221,6 @@ FAM001	I002	0	0	2	1	70"></textarea>
             <div class="ped-actions">
                 <div style="display:flex; justify-content:flex-end; width:100%;">
                     <button class="btn-primary" onclick="addPedEntry()">1人追加</button>
-                    <button class="btn-info" onclick="clearPedEntries()">すべてクリア</button>
                 </div>
 
             </div>
@@ -203,7 +231,7 @@ FAM001	I002	0	0	2	1	70"></textarea>
 
         <div class="panel">
             <div class="button-group left">
-                <button class="btn-danger" onclick="openGeneratedPedigree()">PEDから家系図生成して開く</button>
+                <button class="btn-danger" id="btn-generate-pedigree" onclick="openGeneratedPedigree()">PEDから家系図生成して開く</button>
                 <button class="btn-secondary" onclick="saveAsPng()">PNGで保存する</button>
                 <button class="btn-secondary" onclick="saveAsSvg()">SVGとして保存する</button>
             </div>
@@ -220,6 +248,72 @@ FAM001	I002	0	0	2	1	70"></textarea>
     </footer>
 
     <script>
+            // Driver.js guide
+            function startDriverGuide() {
+                if (typeof window.Driver === 'undefined') {
+                    alert('Driver.jsが読み込まれていません。');
+                    return;
+                }
+                const driver = new window.Driver({
+                    allowClose: false,
+                    overlayColor: '#00000066',
+                    stagePadding: 6,
+                    nextBtnText: '次へ',
+                    prevBtnText: '戻る',
+                    doneBtnText: '完了',
+                });
+                driver.defineSteps([
+                    {
+                        element: '#btn-sample-3gen7',
+                        popover: {
+                            title: 'ステップ1',
+                            description: '「３世代7人サンプル」ボタンを押してください。',
+                            position: 'bottom'
+                        }
+                    },
+                    {
+                        element: '#ped-text-input',
+                        popover: {
+                            title: 'ステップ1.5',
+                            description: 'もし自分のPEDがあれば、この枠にコピー＆ペーストしてください。',
+                            position: 'top'
+                        }
+                    },
+                    {
+                        element: '#btn-load-ped-table',
+                        popover: {
+                            title: 'ステップ2',
+                            description: '「テーブルに読み込む」ボタンを押してください。',
+                            position: 'bottom'
+                        }
+                    },
+                    {
+                        element: '#btn-generate-pedigree',
+                        popover: {
+                            title: 'ステップ3',
+                            description: '「PEDから家系図生成して開く」ボタンを押してください。',
+                            position: 'bottom'
+                        }
+                    },
+                    {
+                        element: '#drawio-frame',
+                        popover: {
+                            title: 'ステップ4',
+                            description: 'ここに、家系図が表示されます。図の調整をしてください。',
+                            position: 'top'
+                        }
+                    },
+                    {
+                        element: 'button[onclick="saveAsSvg()"]',
+                        popover: {
+                            title: 'ステップ5',
+                            description: '「SVGとして保存する」ボタンを押して家系図をSVG形式で保存できます。',
+                            position: 'bottom'
+                        }
+                    }
+                ]);
+                driver.start();
+            }
             function downloadPedText() {
                 if (!pedEntries.length) {
                     alert('テーブルが空です。');
