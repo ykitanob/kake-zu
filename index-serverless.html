@@ -136,27 +136,12 @@
     <div class="container">
         <div class="panel">
             <h3>📋 PED入力（Draw.io起動前）</h3>
-            <div style="margin:6px 0 8px 0;font-size:14px;color:#333;font-weight:700;">【一例ずつ入力する場合は以下に入力して、「1人追加」ボタンを押してください】</div>
-            <div class="ped-grid">
-                <div><label for="fid">Family ID (FID)</label><input id="fid" value="FAM001"></div>
-                <div><label for="iid">Individual ID (ID)</label><input id="iid" placeholder="I001"></div>
-                <div><label for="pid">Paternal ID (父ID)</label><input id="pid" value="0"></div>
-                <div><label for="mid">Maternal ID (母ID)</label><input id="mid" value="0"></div>
-                <div>
-                    <label for="sex">Sex (性別)</label>
-                    <select id="sex"><option value="1">1=男性</option><option value="2">2=女性</option><option value="0">0=不明</option></select>
-                </div>
-                <div><label for="pheno">Phenotype (表現型)</label><input id="pheno" value="1"></div>
-                <div><label for="age">Age (年齢)</label><input id="age" value=""></div>
-            </div>
-
+            
             <div class="ped-actions">
-                <button class="btn-primary" onclick="addPedEntry()">1人追加</button>
-                <button class="btn-secondary" onclick="loadSamplePedigree()">3世代7人サンプル</button>
-                <button class="btn-secondary" onclick="loadSample2Gen4()">2世代4人サンプル</button>
-                <button class="btn-secondary" onclick="loadSample3Gen10()">3世代10人サンプル</button>
-                <button class="btn-secondary" onclick="loadSample4Gen20()">4世代20人サンプル</button>
-                <button class="btn-info" onclick="clearPedEntries()">クリア</button>
+                 <button class="btn-secondary" onclick="loadSamplePedigree()">3世代7人サンプル</button>
+                 <button class="btn-secondary" onclick="loadSample2Gen4()">2世代4人サンプル</button>
+                 <button class="btn-secondary" onclick="loadSample3Gen10()">3世代10人サンプル</button>
+                 <button class="btn-secondary" onclick="loadSample4Gen20()">4世代20人サンプル</button>
             </div>
 
             <label for="ped-text-input" style="display:block;margin-top:10px;font-size:12px;color:#555;">PEDテキスト貼り付け（タブ/スペース区切り）</label>
@@ -174,8 +159,8 @@
             <textarea id="ped-text-input" rows="5" placeholder="FAM001	I001	0	0	1	1	72
 FAM001	I002	0	0	2	1	70"></textarea>
             <div class="ped-actions">
-                <button class="btn-info" onclick="importPedText(true)">貼り付け内容で置き換える</button>
-                <button class="btn-info" onclick="importPedText(false)">貼り付け内容を追加する</button>
+                 <button class="btn-primary" onclick="loadPedTextToTable()">テーブルに読み込む</button>
+                 <button class="btn-info" onclick="importPedText(false)">テーブルに追加する</button>
             </div>
 
             <div class="ped-table-header">📋 以下のテーブルの内容で家系図を作成します。確認してください</div>
@@ -184,7 +169,35 @@ FAM001	I002	0	0	2	1	70"></textarea>
                     <thead><tr><th>FID</th><th>ID</th><th>父ID</th><th>母ID</th><th>性別</th><th>表現型</th><th>年齢</th><th>削除</th></tr></thead>
                     <tbody id="ped-tbody"></tbody>
                 </table>
+                    <div class="ped-actions" style="margin-top:8px;">
+                            <div style="display:flex; justify-content:flex-end; width:100%;">
+                                <button class="btn-info" onclick="downloadPedText()">テーブルの内容をテキストでダウンロード</button>
+                            </div>
+                    </div>
             </div>
+
+<div style="margin:6px 0 8px 0;font-size:14px;color:#333;font-weight:700;">【一例ずつ入力する場合は以下に入力して、「1人追加」ボタンを押してください】</div>
+            <div class="ped-grid">
+                <div><label for="fid">Family ID (FID)</label><input id="fid" value="FAM001"></div>
+                <div><label for="iid">Individual ID (ID)</label><input id="iid" placeholder="I001"></div>
+                <div><label for="pid">Paternal ID (父ID)</label><input id="pid" value="0"></div>
+                <div><label for="mid">Maternal ID (母ID)</label><input id="mid" value="0"></div>
+                <div>
+                    <label for="sex">Sex (性別)</label>
+                    <select id="sex"><option value="1">1=男性</option><option value="2">2=女性</option><option value="0">0=不明</option></select>
+                </div>
+                <div><label for="pheno">Phenotype (表現型)</label><input id="pheno" value="1"></div>
+                <div><label for="age">Age (年齢)</label><input id="age" value=""></div>
+            </div>
+            <div class="ped-actions">
+                <div style="display:flex; justify-content:flex-end; width:100%;">
+                    <button class="btn-primary" onclick="addPedEntry()">1人追加</button>
+                    <button class="btn-info" onclick="clearPedEntries()">すべてクリア</button>
+                </div>
+
+            </div>
+
+
 
         </div>
 
@@ -207,6 +220,26 @@ FAM001	I002	0	0	2	1	70"></textarea>
     </footer>
 
     <script>
+            function downloadPedText() {
+                if (!pedEntries.length) {
+                    alert('テーブルが空です。');
+                    return;
+                }
+                const text = pedEntries
+                    .map(r => `${r.fid}\t${r.id}\t${r.fatherId}\t${r.motherId}\t${r.sex}\t${r.phenotype}\t${r.age || ''}`)
+                    .join('\n');
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'ped-table.txt';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+            }
         const pedEntries = [];
         let pendingXmlDownload = false;
         let currentXmlSpinKey = null;
@@ -370,74 +403,115 @@ FAM001	I002	0	0	2	1	70"></textarea>
         }
 
         function loadSamplePedigree() {
-            pedEntries.length = 0;
-            pedEntries.push(
-                { fid: 'FAM001', id: 'I001', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '78' },
-                { fid: 'FAM001', id: 'I002', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '75' },
-                { fid: 'FAM001', id: 'I003', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '74' },
-                { fid: 'FAM001', id: 'I004', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '72' },
-                { fid: 'FAM001', id: 'I005', fatherId: 'I001', motherId: 'I002', sex: '1', phenotype: '1', age: '50' },
-                { fid: 'FAM001', id: 'I006', fatherId: 'I003', motherId: 'I004', sex: '2', phenotype: '1', age: '48' },
-                { fid: 'FAM001', id: 'I007', fatherId: 'I005', motherId: 'I006', sex: '1', phenotype: '2', age: '24' }
-            );
-            renderPedEntries();
+                const sample = [
+                    { fid: 'FAM001', id: 'I001', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '78' },
+                    { fid: 'FAM001', id: 'I002', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '75' },
+                    { fid: 'FAM001', id: 'I003', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '74' },
+                    { fid: 'FAM001', id: 'I004', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '72' },
+                    { fid: 'FAM001', id: 'I005', fatherId: 'I001', motherId: 'I002', sex: '1', phenotype: '1', age: '50' },
+                    { fid: 'FAM001', id: 'I006', fatherId: 'I003', motherId: 'I004', sex: '2', phenotype: '1', age: '48' },
+                    { fid: 'FAM001', id: 'I007', fatherId: 'I005', motherId: 'I006', sex: '1', phenotype: '2', age: '24' }
+                ];
+                document.getElementById('ped-text-input').value = sample.map(r => `${r.fid}\t${r.id}\t${r.fatherId}\t${r.motherId}\t${r.sex}\t${r.phenotype}\t${r.age}`).join('\n');
         }
 
         function loadSample2Gen4() {
-            pedEntries.length = 0;
-            pedEntries.push(
-                { fid: 'FAM002', id: 'I001', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '42' },
-                { fid: 'FAM002', id: 'I002', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '40' },
-                { fid: 'FAM002', id: 'I003', fatherId: 'I001', motherId: 'I002', sex: '1', phenotype: '1', age: '14' },
-                { fid: 'FAM002', id: 'I004', fatherId: 'I001', motherId: 'I002', sex: '2', phenotype: '2', age: '10' }
-            );
-            renderPedEntries();
+                const sample = [
+                    { fid: 'FAM002', id: 'I0021', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '42' },
+                    { fid: 'FAM002', id: 'I0022', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '40' },
+                    { fid: 'FAM002', id: 'I0023', fatherId: 'I0021', motherId: 'I0022', sex: '1', phenotype: '1', age: '14' },
+                    { fid: 'FAM002', id: 'I0024', fatherId: 'I0021', motherId: 'I0022', sex: '2', phenotype: '2', age: '10' }
+                ];
+                document.getElementById('ped-text-input').value = sample.map(r => `${r.fid}\t${r.id}\t${r.fatherId}\t${r.motherId}\t${r.sex}\t${r.phenotype}\t${r.age}`).join('\n');
         }
 
         function loadSample3Gen10() {
-            pedEntries.length = 0;
-            pedEntries.push(
-                { fid: 'FAM003', id: 'I001', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '76' },
-                { fid: 'FAM003', id: 'I002', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '73' },
-                { fid: 'FAM003', id: 'I003', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '74' },
-                { fid: 'FAM003', id: 'I004', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '71' },
-                { fid: 'FAM003', id: 'I005', fatherId: 'I001', motherId: 'I002', sex: '1', phenotype: '1', age: '52' },
-                { fid: 'FAM003', id: 'I006', fatherId: 'I001', motherId: 'I002', sex: '2', phenotype: '1', age: '49' },
-                { fid: 'FAM003', id: 'I007', fatherId: 'I003', motherId: 'I004', sex: '1', phenotype: '2', age: '50' },
-                { fid: 'FAM003', id: 'I008', fatherId: 'I003', motherId: 'I004', sex: '2', phenotype: '1', age: '46' },
-                { fid: 'FAM003', id: 'I009', fatherId: 'I005', motherId: 'I008', sex: '1', phenotype: '1', age: '26' },
-                { fid: 'FAM003', id: 'I010', fatherId: 'I005', motherId: 'I008', sex: '2', phenotype: '2', age: '22' }
-            );
-            renderPedEntries();
+                const sample = [
+                    { fid: 'FAM003', id: 'I0031', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '76' },
+                    { fid: 'FAM003', id: 'I0032', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '73' },
+                    { fid: 'FAM003', id: 'I0033', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '74' },
+                    { fid: 'FAM003', id: 'I0034', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '71' },
+                    { fid: 'FAM003', id: 'I0035', fatherId: 'I0031', motherId: 'I0032', sex: '1', phenotype: '1', age: '52' },
+                    { fid: 'FAM003', id: 'I0036', fatherId: 'I0031', motherId: 'I0032', sex: '2', phenotype: '1', age: '49' },
+                    { fid: 'FAM003', id: 'I0037', fatherId: 'I0033', motherId: 'I0034', sex: '1', phenotype: '2', age: '50' },
+                    { fid: 'FAM003', id: 'I0038', fatherId: 'I0033', motherId: 'I0034', sex: '2', phenotype: '1', age: '46' },
+                    { fid: 'FAM003', id: 'I0039', fatherId: 'I0035', motherId: 'I0038', sex: '1', phenotype: '1', age: '26' },
+                    { fid: 'FAM003', id: 'I0040', fatherId: 'I0035', motherId: 'I0038', sex: '2', phenotype: '2', age: '22' }
+                ];
+                document.getElementById('ped-text-input').value = sample.map(r => `${r.fid}\t${r.id}\t${r.fatherId}\t${r.motherId}\t${r.sex}\t${r.phenotype}\t${r.age}`).join('\n');
         }
 
         function loadSample4Gen20() {
+                const sample = [
+                    { fid: 'FAM004', id: 'I4001', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '82' },
+                    { fid: 'FAM004', id: 'I4002', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '80' },
+                    { fid: 'FAM004', id: 'I4003', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '81' },
+                    { fid: 'FAM004', id: 'I4004', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '79' },
+                    { fid: 'FAM004', id: 'I4005', fatherId: 'I4001', motherId: 'I4002', sex: '1', phenotype: '1', age: '52' },
+                    { fid: 'FAM004', id: 'I4006', fatherId: 'I4003', motherId: 'I4004', sex: '2', phenotype: '1', age: '49' },
+                    { fid: 'FAM004', id: 'I4007', fatherId: 'I4005', motherId: 'I4006', sex: '1', phenotype: '2', age: '24' },
+
+                    { fid: 'FAM004', id: 'I4008', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '83' },
+                    { fid: 'FAM004', id: 'I4009', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '81' },
+                    { fid: 'FAM004', id: 'I4010', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '80' },
+                    { fid: 'FAM004', id: 'I4011', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '78' },
+                    { fid: 'FAM004', id: 'I4012', fatherId: 'I4008', motherId: 'I4009', sex: '2', phenotype: '1', age: '50' },
+                    { fid: 'FAM004', id: 'I4013', fatherId: 'I4010', motherId: 'I4011', sex: '1', phenotype: '1', age: '47' },
+                    { fid: 'FAM004', id: 'I4014', fatherId: 'I4012', motherId: 'I4013', sex: '2', phenotype: '1', age: '22' },
+
+                    { fid: 'FAM004', id: 'I4015', fatherId: 'I4007', motherId: 'I4014', sex: '1', phenotype: '1', age: '12' },
+                    { fid: 'FAM004', id: 'I4016', fatherId: 'I4007', motherId: 'I4014', sex: '2', phenotype: '1', age: '10' },
+                    { fid: 'FAM004', id: 'I4017', fatherId: 'I4007', motherId: 'I4014', sex: '1', phenotype: '2', age: '8' },
+                    { fid: 'FAM004', id: 'I4018', fatherId: 'I4007', motherId: 'I4014', sex: '2', phenotype: '1', age: '6' },
+                    { fid: 'FAM004', id: 'I4019', fatherId: 'I4007', motherId: 'I4014', sex: '1', phenotype: '1', age: '4' },
+                    { fid: 'FAM004', id: 'I4020', fatherId: 'I4007', motherId: 'I4014', sex: '2', phenotype: '1', age: '2' }
+                ];
+                document.getElementById('ped-text-input').value = sample.map(r => `${r.fid}\t${r.id}\t${r.fatherId}\t${r.motherId}\t${r.sex}\t${r.phenotype}\t${r.age}`).join('\n');
+        }
+        function loadPedTextToTable() {
+            const text = (document.getElementById('ped-text-input').value || '').trim();
+            if (!text) {
+                alert('PEDテキストを貼り付けてください。');
+                return;
+            }
+            const lines = text.split(/\r?\n/);
+            const imported = [];
+            const existingIds = new Set();
+            for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+                const line = lines[lineIndex].trim();
+                if (!line || line.startsWith('#')) continue;
+                const columns = line.split(/\s+/);
+                if (columns.length < 6) {
+                    alert(`PED形式エラー: ${lineIndex + 1}行目は6列以上必要です。`);
+                    return;
+                }
+                const record = {
+                    fid: columns[0],
+                    id: columns[1],
+                    fatherId: columns[2] || '0',
+                    motherId: columns[3] || '0',
+                    sex: columns[4] || '0',
+                    phenotype: columns[5] || '1',
+                    age: columns[6] || ''
+                };
+                if (!record.id) {
+                    alert(`PED形式エラー: ${lineIndex + 1}行目のIDが空です。`);
+                    return;
+                }
+                if (existingIds.has(record.id)) {
+                    alert(`重複IDエラー: ${record.id} が重複しています。`);
+                    return;
+                }
+                existingIds.add(record.id);
+                imported.push(record);
+            }
             pedEntries.length = 0;
-            pedEntries.push(
-                { fid: 'FAM004', id: 'I001', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '82' },
-                { fid: 'FAM004', id: 'I002', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '80' },
-                { fid: 'FAM004', id: 'I003', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '81' },
-                { fid: 'FAM004', id: 'I004', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '79' },
-                { fid: 'FAM004', id: 'I005', fatherId: 'I001', motherId: 'I002', sex: '1', phenotype: '1', age: '52' },
-                { fid: 'FAM004', id: 'I006', fatherId: 'I003', motherId: 'I004', sex: '2', phenotype: '1', age: '49' },
-                { fid: 'FAM004', id: 'I007', fatherId: 'I005', motherId: 'I006', sex: '1', phenotype: '2', age: '24' },
-
-                { fid: 'FAM004', id: 'I008', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '83' },
-                { fid: 'FAM004', id: 'I009', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '81' },
-                { fid: 'FAM004', id: 'I010', fatherId: '0',    motherId: '0',    sex: '1', phenotype: '1', age: '80' },
-                { fid: 'FAM004', id: 'I011', fatherId: '0',    motherId: '0',    sex: '2', phenotype: '1', age: '78' },
-                { fid: 'FAM004', id: 'I012', fatherId: 'I008', motherId: 'I009', sex: '2', phenotype: '1', age: '50' },
-                { fid: 'FAM004', id: 'I013', fatherId: 'I010', motherId: 'I011', sex: '1', phenotype: '1', age: '47' },
-                { fid: 'FAM004', id: 'I014', fatherId: 'I012', motherId: 'I013', sex: '2', phenotype: '1', age: '22' },
-
-                { fid: 'FAM004', id: 'I015', fatherId: 'I007', motherId: 'I014', sex: '1', phenotype: '1', age: '12' },
-                { fid: 'FAM004', id: 'I016', fatherId: 'I007', motherId: 'I014', sex: '2', phenotype: '1', age: '10' },
-                { fid: 'FAM004', id: 'I017', fatherId: 'I007', motherId: 'I014', sex: '1', phenotype: '2', age: '8' },
-                { fid: 'FAM004', id: 'I018', fatherId: 'I007', motherId: 'I014', sex: '2', phenotype: '1', age: '6' },
-                { fid: 'FAM004', id: 'I019', fatherId: 'I007', motherId: 'I014', sex: '1', phenotype: '1', age: '4' },
-                { fid: 'FAM004', id: 'I020', fatherId: 'I007', motherId: 'I014', sex: '2', phenotype: '1', age: '2' }
-            );
+            pedEntries.push(...imported);
             renderPedEntries();
+            // Set FID input to first row's family ID if available
+            if (pedEntries.length > 0) {
+                document.getElementById('fid').value = pedEntries[0].fid;
+            }
         }
 
         function renderPedEntries() {
