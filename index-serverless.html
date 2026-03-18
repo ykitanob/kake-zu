@@ -957,12 +957,9 @@ FAM001	I002	0	0	2	1	70"></textarea>
 
                     const symbolId = nextCellId++;
                     const textId = nextCellId++;
-                    const phenotypeLabel = person.phenotype === '2'
-                        ? 'Affected'
-                        : (person.phenotype === '1' ? 'Unaffected' : `P:${person.phenotype}`);
-                    const ageLabel = person.age ? `, Age:${person.age}` : '';
+                    const ageText = person.age ? ` ${person.age}y` : '';
                     nodeCells.push(`<mxCell id="${symbolId}" value="" style="${shapeStyle(person)}" vertex="1" parent="1"><mxGeometry x="${x}" y="${y}" width="${symbolSize}" height="${symbolSize}" as="geometry"/></mxCell>`);
-                    nodeCells.push(`<mxCell id="${textId}" value="${escapeXml(`${person.id} (${phenotypeLabel}${ageLabel})`)}" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=18;" vertex="1" parent="1"><mxGeometry x="${x - 30}" y="${y + symbolSize + 6}" width="150" height="34" as="geometry"/></mxCell>`);
+                    nodeCells.push(`<mxCell id="${textId}" value="${escapeXml(person.id + ageText)}" style="text;html=0;strokeColor=none;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;overflow=visible;" vertex="1" parent="1"><mxGeometry x="${x - 35}" y="${y + symbolSize + 6}" width="150" height="36" as="geometry"/></mxCell>`);
                 });
             });
 
@@ -1139,7 +1136,7 @@ FAM001	I002	0	0	2	1	70"></textarea>
                 : 20;
             const pedTitleX = Math.max(0, Math.round(topLevelLeftX - (symbolSize * 4)));
             const pedTitleId = nextCellId++;
-            nodeCells.push(`<mxCell id="${pedTitleId}" value="${escapeXml(`PEDID: ${pedId}`)}" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=30;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="${pedTitleX}" y="12" width="520" height="48" as="geometry"/></mxCell>`);
+            nodeCells.push(`<mxCell id="${pedTitleId}" value="${escapeXml(`PEDID: ${pedId}`)}" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=30;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="${pedTitleX}" y="12" width="520" height="48" as="geometry"/></mxCell>`);
 
             const graphModel = `<mxGraphModel dx="1420" dy="780" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0"><root>${rootCells.join('')}${edgeCells.join('')}${nodeCells.join('')}</root></mxGraphModel>`;
             return `<mxfile host="app.diagrams.net" modified="${new Date().toISOString()}" agent="5.0" version="24.0.0" type="device"><diagram id="pedigree" name="PED Family">${graphModel}</diagram></mxfile>`;
@@ -1179,6 +1176,65 @@ FAM001	I002	0	0	2	1	70"></textarea>
             a.click();
             a.remove();
             URL.revokeObjectURL(url);
+        }
+
+        function svgEscape(text) {
+            return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function stripForeignObjects(svgString) {
+            // DOMParser/XMLSerializer のラウンドトリップは SVG を破損させるため regex で処理する
+
+            // 1) <switch>...<foreignObject>HTML</foreignObject>...<text attrs>fallback</text>...</switch>
+            //    を foreignObject の本文テキストから再構築した <text>/<tspan> に置換する
+            let result = svgString.replace(
+                /<switch>([\s\S]*?)<\/switch>/g,
+                (match, inner) => {
+                    if (!/<foreignObject/i.test(inner)) return match;
+
+                    // foreignObject の HTML 本文からテキストを抽出
+                    const foMatch = inner.match(/<foreignObject[^>]*>([\s\S]*?)<\/foreignObject>/i);
+                    let text = foMatch ? foMatch[1] : '';
+                    text = text
+                        .replace(/<br\s*\/?>/gi, '\n')
+                        .replace(/<\/div>/gi, '\n')
+                        .replace(/<\/p>/gi, '\n')
+                        .replace(/<[^>]+>/g, '')
+                        .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+                        .replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#xa;/g, '\n')
+                        .replace(/\n{2,}/g, '\n')
+                        .trim();
+
+                    // <text> fallback からは属性のみ取得（テキスト本文は使わない）
+                    const textFallbackMatch = inner.match(/<text([^>]*)>[\s\S]*?<\/text>/);
+                    const textAttrs = textFallbackMatch ? textFallbackMatch[1] : '';
+
+                    if (!text) return ''; // ラベルなし → switch ごと削除
+
+                    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+                    if (lines.length === 1) {
+                        return `<text${textAttrs}>${svgEscape(lines[0])}</text>`;
+                    }
+
+                    // 複数行: tspan で改行
+                    const xMatch = textAttrs.match(/\bx="([^"]*)"/);
+                    const x = xMatch ? xMatch[1] : '0';
+                    const fsMatch = textAttrs.match(/font-size="([^"]*)"/);
+                    const lineHeight = Math.round((fsMatch ? parseFloat(fsMatch[1]) : 18) * 1.4);
+
+                    const tspans = lines.map((line, i) =>
+                        i === 0
+                            ? `<tspan x="${x}">${svgEscape(line)}</tspan>`
+                            : `<tspan x="${x}" dy="${lineHeight}">${svgEscape(line)}</tspan>`
+                    ).join('');
+                    return `<text${textAttrs}>${tspans}</text>`;
+                }
+            );
+
+            // 2) 残存する単独 foreignObject を除去
+            result = result.replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, '');
+
+            return result;
         }
 
         window.addEventListener('message', async (event) => {
@@ -1272,13 +1328,16 @@ FAM001	I002	0	0	2	1	70"></textarea>
                 if (raw.startsWith('data:image/svg')) {
                     const svgBlob = dataUrlToBlob(raw);
                     if (svgBlob) {
-                        triggerDownload(svgBlob, `pedigree-${new Date().toISOString().replace(/[:.]/g, '-')}.svg`);
+                        const svgText = await svgBlob.text();
+                        const cleaned = stripForeignObjects(svgText);
+                        triggerDownload(new Blob([cleaned], { type: 'image/svg+xml;charset=utf-8' }), `pedigree-${new Date().toISOString().replace(/[:.]/g, '-')}.svg`);
                         return;
                     }
                 }
 
                 if (raw.startsWith('<svg')) {
-                    triggerDownload(new Blob([raw], { type: 'image/svg+xml;charset=utf-8' }), `pedigree-${new Date().toISOString().replace(/[:.]/g, '-')}.svg`);
+                    const cleaned = stripForeignObjects(raw);
+                    triggerDownload(new Blob([cleaned], { type: 'image/svg+xml;charset=utf-8' }), `pedigree-${new Date().toISOString().replace(/[:.]/g, '-')}.svg`);
                 }
             }
         });
